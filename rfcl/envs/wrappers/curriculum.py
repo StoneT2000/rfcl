@@ -79,7 +79,7 @@ class InitialStateWrapper(gymnasium.Wrapper):
         curr_env = self.env
         while True:
             if hasattr(curr_env, "observation"):
-                obs_fns.append(curr_env.observation)
+                obs_fns.append(curr_env.get_wrapper_attr("observation"))
             if hasattr(curr_env, "env"):
                 curr_env = curr_env.env
             else:

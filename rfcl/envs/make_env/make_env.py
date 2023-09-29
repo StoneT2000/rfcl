@@ -143,10 +143,8 @@ def make_env(
                 env_factory(
                     env_id,
                     idx,
-                    seed=seed,
                     env_kwargs=env_kwargs,
                     record_video_path=record_video_path,
-                    save_trajectory=save_trajectory,
                     wrappers=wrappers,
                 )
                 for idx in range(num_envs)

@@ -60,7 +60,7 @@ train:
   critic_lr: 3e-4
   steps: 100_000_000
   dataset_path: None
-  shuffle_demos: False
+  shuffle_demos: True
   num_demos: 1000
 
   data_action_scale: null
@@ -70,7 +70,7 @@ train:
   initial_step_back: 1
   start_step_sampler: "geometric"
   curriculum_method: "per_trajectory"
-  per_trajectory_buffer_size: 3
+  per_demo_buffer_size: 3
   demo_horizon_to_max_steps_ratio: 3
 
   load_actor: True

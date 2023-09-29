@@ -10,6 +10,33 @@ import h5py
 import numpy as np
 import jax
 
+def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1, shuffle: bool = False):
+    states_dataset = defaultdict(dict)
+
+    demo_dataset = h5py.File(demo_dataset_path)
+    with open(demo_dataset_path.replace(".h5", ".json"), "r") as f:
+        demo_dataset_meta = json.load(f)
+    if num_demos == -1:
+        num_demos = len(demo_dataset_meta["episodes"])
+    load_count = 0
+    if shuffle:
+        np.random.shuffle(demo_dataset_meta["episodes"])
+    for episode in demo_dataset_meta["episodes"]:
+        if not episode["info"]["success"] and skip_failed:
+            continue
+        demo_id = episode["episode_id"]
+        demo = demo_dataset[f"traj_{demo_id}"]
+        reset_kwargs = episode["reset_kwargs"]
+        env_states = np.array(demo["env_states"])
+        states_dataset[demo_id] = dict(state=env_states, seed=episode["episode_seed"], reset_kwargs=reset_kwargs, demo_id=demo_id)
+
+        load_count += 1
+        if load_count >= num_demos:
+            break
+    print(f"Converted {demo_dataset_path}, skip_failed={skip_failed}, shuffle={shuffle}, loaded {load_count} demos")
+    demo_dataset.close()
+    return states_dataset
+
 
 class ReplayDataset:
     """

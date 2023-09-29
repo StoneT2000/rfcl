@@ -4,6 +4,7 @@ Configs can be a bit complicated, we recommend directly looking at configs/ms2/b
 Alternatively, go to the file defining each of the nested configurations and see the comments.
 """
 import copy
+import warnings
 import os.path as osp
 import sys
 from dataclasses import asdict, dataclass
@@ -18,7 +19,7 @@ from omegaconf import OmegaConf
 
 from rfcl.agents.sac import SAC, ActorCritic, SACConfig
 from rfcl.agents.sac.networks import DiagGaussianActor
-from rfcl.data.dataset import ReplayDataset
+from rfcl.data.dataset import ReplayDataset, get_states_dataset
 from rfcl.envs.make_env import (
     EnvConfig,
     get_demo_to_states_dataset_fn,
@@ -31,6 +32,7 @@ from rfcl.logger import LoggerConfig
 from rfcl.models import NetworkConfig, build_network_from_cfg
 from rfcl.utils.spaces import get_action_dim
 
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 @dataclass
 class TrainConfig:
@@ -48,18 +50,16 @@ class TrainConfig:
     initial_step_back: int
     curriculum_method: str
     start_step_sampler: str
-    per_trajectory_buffer_size: int
+    per_demo_buffer_size: int
     demo_horizon_to_max_steps_ratio: float
-
-    stage1_offline_buffer: bool
 
     # forward curriculum configs
     forward_curriculum: str
     staleness_transform: str
     staleness_coef: float
-    staleness_temperature: 0.1
+    staleness_temperature: float
     score_transform: str
-    score_temperature: 0.1
+    score_temperature: float
     num_seeds: int
 
     # stage 2 training configs
@@ -116,13 +116,8 @@ def main(cfg: SACExperiment):
     ### Create Environments ###
     if cfg.demo_seed is not None:
         np.random.seed(cfg.demo_seed)
-    demo_to_states_dataset = get_demo_to_states_dataset_fn(cfg.env.env_id)
-    states_dataset = demo_to_states_dataset(
-        cfg.train.dataset_path,
-        state_extractor=lambda id, x: {"states": np.array(x["env_states"])},  # TODO make this part of code cleanre
-        num_demos=cfg.train.num_demos,
-        shuffle=cfg.train.shuffle_demos,
-    )["states"]
+    states_dataset = get_states_dataset(cfg.train.dataset_path, num_demos=cfg.train.num_demos, shuffle=cfg.train.shuffle_demos, skip_failed=True)
+
     if "reward_mode" in cfg.env.env_kwargs:
         reward_mode = cfg.env.env_kwargs["reward_mode"]
     elif "reward_type" in cfg.env.env_kwargs:
@@ -136,9 +131,7 @@ def main(cfg: SACExperiment):
         skip_failed=False,
         num_demos=cfg.train.num_demos,
         reward_mode=reward_mode,
-        clip_to_eps=False,
         eps_ids=states_dataset.keys(),
-        action_scale=None,
         data_action_scale=cfg.train.data_action_scale,
     )
     if demo_replay_dataset.action_scale is not None:
@@ -173,19 +166,18 @@ def main(cfg: SACExperiment):
             eval_env,
             eval_mode=True,
             states_dataset=states_dataset,
-            initial_step_back=cfg.train.initial_step_back,
             reverse_step_size=cfg.train.reverse_step_size,
             curriculum_method=cfg.train.curriculum_method,
+            per_demo_buffer_size=cfg.train.per_demo_buffer_size,
             start_step_sampler=cfg.train.start_step_sampler,
         )
         link_envs = [eval_env]
     env = ReverseCurriculumWrapper(
         env,
         states_dataset=states_dataset,
-        initial_step_back=cfg.train.initial_step_back,
         reverse_step_size=cfg.train.reverse_step_size,
         curriculum_method=cfg.train.curriculum_method,
-        per_trajectory_buffer_size=cfg.train.per_trajectory_buffer_size,
+        per_demo_buffer_size=cfg.train.per_demo_buffer_size,
         start_step_sampler=cfg.train.start_step_sampler,
         link_envs=link_envs,
     )
