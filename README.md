@@ -25,7 +25,7 @@ pip install gymnasium-robotics==1.2.3 mani_skill2==0.5.3 # for Adroit and ManiSk
 We use the older metaworld environments running on old mujoco so we recommend doing this in a separate conda env
 ```
 conda install -c conda-forge mesalib glew glfw patchelf
-pip install "cython<3"
+pip install "cython<3" gymnasium-robotics==1.2.3
 pip install git+https://github.com/Farama-Foundation/Metaworld.git@04be337a12305e393c0caf0cbf5ec7755c7c8feb
 pip install shimmy[gym-v21]
 ```

@@ -29,7 +29,7 @@ def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1,
         reset_kwargs = episode["reset_kwargs"]
 
         # this is specifically for adroit envs that use options
-        if "initial_state_dict" in reset_kwargs["options"]:
+        if "options" in reset_kwargs and "initial_state_dict" in reset_kwargs["options"]:
             for k in reset_kwargs["options"]["initial_state_dict"]:
                 reset_kwargs["options"]["initial_state_dict"][k] = np.array(reset_kwargs["options"]["initial_state_dict"][k])
 
@@ -38,6 +38,12 @@ def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1,
             env_states = np.array(demo["env_states"])
         else:
             env_states = [dict(zip(demo["env_states"], t)) for t in zip(*demo["env_states"].values())]
+        
+        # lightly truncate trajectory to improve reverse curriculum speed, it is not necessary however
+        num_steps_in_success = demo["success"][:].sum()
+        if num_steps_in_success > 50:
+            truncate_idx = len(env_states) - (num_steps_in_success - 50)
+            env_states = env_states[:truncate_idx]
         seed = None
         if "episode_seed" in episode:
             seed = episode["episode_seed"]

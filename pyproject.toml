@@ -28,7 +28,7 @@ dependencies = [
     "scipy",
 
     # RL
-    "gymnasium",
+    "gymnasium==0.29.1",
     "gymnax",
 
     # Jax Related
