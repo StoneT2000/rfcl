@@ -5,7 +5,7 @@ Code implementing the reverse curriculum wrapper
 import copy
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from typing import Callable, List, Tuple, TypedDict, Union
+from typing import List
 
 import gymnasium
 import numpy as np
