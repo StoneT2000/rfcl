@@ -86,7 +86,7 @@ def clean_trajectories(h5_file: h5py.File, json_dict: dict, prune_empty_action=T
 
 class RecordEpisodeWrapper(gym.Wrapper):
     """
-    record trajectories in d4rl in the MS2 format
+    record trajectories for mujoco envs in the MS2 format
     """
 
     def __init__(

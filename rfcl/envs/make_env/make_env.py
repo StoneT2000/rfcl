@@ -12,7 +12,6 @@ import rfcl.envs.make_env._meta_world as _meta_world
 import rfcl.envs.make_env._mani_skill2 as _mani_skill2
 
 from rfcl.envs.wrappers.common import EpisodeStatsWrapper, SparseRewardWrapper, ContinuousTaskWrapper
-# from staterl.utils.demos import d4rl_demos_to_states_dataset, ms2_demos_to_states_dataset, metaworld_demos_to_states_dataset
 
 from chex import Array
 from omegaconf import OmegaConf
@@ -36,6 +35,18 @@ class EnvMeta:
     act_space: spaces.Space
     env_suite: str
 
+def wrap_mujoco_env(
+        env, idx=0, record_video_path=None, wrappers=[],
+    ):
+    from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
+    env = ContinuousTaskWrapper(env)
+    env = SparseRewardWrapper(env)
+    env = EpisodeStatsWrapper(env)
+    for wrapper in wrappers:
+        env = wrapper(env)
+    if record_video_path is not None and idx == 0:
+        env = RecordEpisodeWrapper(env, record_video_path, info_on_video=True)
+    return env
 
 def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, save_trajectory: bool = False, wrappers=[]):
     if not isinstance(cfg.env_kwargs, dict):
@@ -87,19 +98,6 @@ def make_env(
             if "binary" in reward_type:
                 env_kwargs["reward_type"] = "sparse"
 
-        def wrap_gymnasium_env(
-                env, idx=0, record_video_path=None, wrappers=[],
-            ):
-            from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
-            env = ContinuousTaskWrapper(env)
-            env = SparseRewardWrapper(env)
-            env = EpisodeStatsWrapper(env)
-            for wrapper in wrappers:
-                env = wrapper(env)
-            if record_video_path is not None and idx == 0:
-                env = RecordEpisodeWrapper(env, record_video_path, info_on_video=True)
-            return env
-
         if _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
             wrappers = [ContinuousTaskWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
@@ -109,24 +107,24 @@ def make_env(
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[]):
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
-                    return wrap_gymnasium_env(
+                    return wrap_mujoco_env(
                         env, reward_type=reward_type,
                         idx=idx, record_video_path=record_video_path, wrappers=wrappers,
                     )
 
                 return _init
         elif _meta_world.is_meta_world_env(env_id):
-            def env_factory(env_id, idx, seed, record_video_path, save_trajectory, env_kwargs, wrappers=[]):
+            def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[]):
                 def _init():
-                    from staterl.envs.wrappers._meta_world import MetaWorldEnv
+                    from rfcl.envs.wrappers._meta_world import MetaWorldEnv
                     from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_HIDDEN, ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
                     from gymnasium.envs.registration import EnvSpec
 
-                    env = MetaWorldEnv(env_id)
+                    env = MetaWorldEnv(env_id, **env_kwargs)
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)
-                    return wrap_gymnasium_env(
-                        env, continuous_task=continuous_task, reward_type=reward_type,
-                        idx=idx, record_video_path=record_video_path, save_trajectory=save_trajectory, wrappers=wrappers,
+                    return wrap_mujoco_env(
+                        env,
+                        idx=idx, record_video_path=record_video_path, wrappers=wrappers,
                     )
                 return _init
         else:
@@ -196,7 +194,7 @@ def get_initial_state_wrapper(env_id):
         from rfcl.envs.wrappers._adroit import AdroitInitialStateWrapper
         return AdroitInitialStateWrapper
     elif _meta_world.is_meta_world_env(env_id):
-        from staterl.envs.wrappers._meta_world import MetaWorldInitialStateWrapper
+        from rfcl.envs.wrappers._meta_world import MetaWorldInitialStateWrapper
         return MetaWorldInitialStateWrapper
     else:
         raise NotImplementedError(f"Need to add the initial state wrapper for {env_id}")
