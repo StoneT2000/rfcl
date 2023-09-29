@@ -47,7 +47,6 @@ class TrainConfig:
 
     # reverse curriculum wrapper configs
     reverse_step_size: int
-    initial_step_back: int
     curriculum_method: str
     start_step_sampler: str
     per_demo_buffer_size: int
