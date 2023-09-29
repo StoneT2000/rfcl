@@ -44,7 +44,7 @@ def wrap_mujoco_env(
     env = EpisodeStatsWrapper(env)
     for wrapper in wrappers:
         env = wrapper(env)
-    if record_video_path is not None and (not record_episode_kwargs['record_episode_kwargs'] or idx == 0):
+    if record_video_path is not None and (not record_episode_kwargs['record_single'] or idx == 0):
         env = RecordEpisodeWrapper(env, record_video_path, trajectory_name=f"trajectory_{idx}", save_video=record_episode_kwargs["save_video"], save_trajectory=record_episode_kwargs['save_trajectory'], info_on_video=record_episode_kwargs['info_on_video'])
     return env
 
@@ -110,7 +110,7 @@ def make_env(
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
                     return wrap_mujoco_env(
-                        env, reward_type=reward_type,
+                        env,
                         idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
 

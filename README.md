@@ -97,11 +97,11 @@ We also highly recommend tracking training via tensorboard or weights and biases
 
 ### Fast Task Solving with Little Data and Sparse Rewards
 
-For starters, it is the **most demonstration and sample efficient** model-free method at the moment to solve the benchmarked simulated tasks: Adroit, MetaWorld, and ManiSkill2. It is also the first (and currently the only) method (model-free or model-based) to solve PegInsertionSide and PlugCharger, two highly randomized and highly precise tasks, from sparse rewards with 10 demonstrations or less as far as we know. See [this](https://reverseforward-cl.github.io/#task-visuals-a) for visualization of those two tasks.
+For starters, it is the **most demonstration and sample efficient** model-free method at the moment to solve the benchmarked simulated tasks: Adroit, MetaWorld, and ManiSkill2 (MS2). It is also the first (and currently the only) method (model-free or model-based) to solve PegInsertionSide and PlugCharger, two highly randomized and highly precise tasks, from sparse rewards with 10 demonstrations or less as far as we know. See [this](https://reverseforward-cl.github.io/#task-visuals-a) for visualization of those two tasks.
 
 In terms of sample-efficiency, [Modem (TD-MPC + demonstrations)](https://nicklashansen.github.io/modemrl/) may be the most sample-efficient as they leverages world models, although the wall-time for in-simulation training is difficult to compare as it is down to implementation so it is unfair to compare "world models + planning + high sample efficiency" vs "model-free w/ no world models or planning + lower sample efficiency" on the dimension of wall-time.
 
-Regardless, RFCL is still the fastest method to solve the benchmarked tasks. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, PickCube can be solved in < 10 minutes, PegInsertionSide can be solved in < 60 minutes, which are the fastest to date. For a table of wall-times, see this TODO.
+Regardless, RFCL is still the fastest method to solve the hardest tasks, which are all tasks in ManiSkill2. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, Adroit Door can be solved in < 5 minutes, MS2 PickCube in < 10 minutes, MS2 PegInsertionSide in < 60 minutes, which are the fastest to date. For a table of wall-times, see this TODO.
 
 
 ### Distilling RL Generated Demonstrations from few Suboptimal Demonstrations
