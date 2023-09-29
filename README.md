@@ -22,7 +22,7 @@ To then install dependencies for environments, run
 pip install gymnasium-robotics==1.2.3 mani_skill2==0.5.3 # for Adroit and ManiSkill2
 ```
 
-We use the older/more stable metaworld environments running on old mujoco so we recommend doing this in a separate conda env
+We use the older metaworld environments running on old mujoco so we recommend doing this in a separate conda env
 ```
 mamba install -c conda-forge mesalib glew glfw patchelf
 pip install "cython<3"
@@ -30,7 +30,7 @@ pip install git+https://github.com/Farama-Foundation/Metaworld.git@04be337a12305
 pip install shimmy[gym-v21]
 ```
 
-We further provide docker images for each environment suite benchmarked for ease of use and deployment with all dependencies installed.
+We further provide [docker images](./docker) for each environment suite benchmarked for ease of use and deployment with all dependencies installed.
 
 ## Data / Demonstrations
 
@@ -108,9 +108,9 @@ Regardless, RFCL is still the fastest method to solve the benchmarked tasks. On 
 
 It is well known most behavior cloning type methods often have difficulty when given suboptimal, multi-modal data, which is the case with human demonstrations in the Adroit environments and the motion planned demonstrations in the ManiSkill2 demonstrations. Standard behavior cloning using all 1000 ManiSkill2 demonstrations has difficulty getting any success on PegInsertionSide and PlugCharger. However, using RFCL to learn from just 10 demonstrations, we can produce a policy capable of solving both tasks, and then generate 1000s more demonstrations from a neural network policy. In our experiments, after generating 5000 demonstrations from the policies trained via RFCL and 10 motion planned demonstrations, behavior cloning is capable of achieving ~100% success on PegInsertionSide and PlugCharger.
 
-This could pave way for a scalable solution to generate usable demonstrations for a diverse set of environments and using behavior cloning type methods to more easily learn e.g. multi-task models, large foundation models etc. To make this easy, we provide a simple evaluation script to rollout a RFCL trained policy across multiple workers to collect many demonstrations.
+This could pave way for a scalable solution to generate usable demonstrations for a diverse set of environments and using behavior cloning type methods to more easily learn e.g. multi-task models, large foundation models etc. To make this easy, we provide a simple script `scripts/collect_demos.py` to rollout a RFCL trained policy across multiple workers to collect many demonstrations.
 
 
 ## Testing on New Environments
 
-To test on your own custom environments or tasks from another suite (e.g. RoboMimic), all you need to do is create an `InitialStateWrapper` TODO. We only benchmark on 22 environments in this work, but an example of how to add RoboMimic is detailed in this tutorial TODO LINK
+To test on your own custom environments or tasks from another suite (e.g. [RoboMimic](https://robomimic.github.io/)), all you need to do is create an `InitialStateWrapper` TODO. We only benchmark on 22 environments in this work, but an example of how to add RoboMimic is detailed in this tutorial TODO LINK
