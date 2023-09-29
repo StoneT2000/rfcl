@@ -1,4 +1,8 @@
 import gymnasium as gym
+class SparseRewardWrapper(gym.Wrapper):
+    def step(self, action):
+        o, _, terminated, truncated, info = self.env.step(action)
+        return o, int(info["success"]), terminated, truncated, info
 
 class ContinuousTaskWrapper(gym.Wrapper):
     """
