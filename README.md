@@ -1,6 +1,6 @@
 # Reverse Forward Curriculum Learning (RFCL)
 
-Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines.
+Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of perform well from the initial states of the given demonstrations, and then genrealize to a larger initial state distribution via a forward curriculum. Our shows a glimpse of the potential of how demonstration/sample efficient RL can be if one leverages the properties of simulation. 
 
 [Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)
 
@@ -53,7 +53,7 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py configs/ms2/sac_ms2_${env}.y
     logger.wandb=True \
     train.num_demos=${demos} \
     seed=${seed} \
-    train.steps=2000000
+    train.steps=4000000
 ```
 
 And for sample-efficient hyperparameters (higher update to data ratio) you would use the _sample_efficient.yml file instead
@@ -82,7 +82,7 @@ There are a few very important hyperparameters to tune if you want better perfor
 - `sac.discount`: Discount factor affects all RL algorithms including RFCL. In general a discount of 0.9 to 0.99 works fine for most tasks.
 - `train.reverse_step_size`: Values from 4 to 8 work fine for all benchmarked tasks, particularly because the demonstration data is slow/suboptimal. For demonstrations that are very optimal / fast, this can be tuned lower in order to reduce the gap between adjacent reverse curriculums.
 - `train.demo_horizon_to_max_steps_ratio`: This controls the dynamic timelimit method employed in RFCL to accelerate the reverse curriculum stage. Higher values means the timelimit is lower. We recommend tuning this based on how much faster you think an optimal policy can solve a task compared to the demonstration. If you think a task can be solved 3x faster than the demonstrations show, then set this to `3`, as is done with ManiSkill2 tasks. Setting this value to `1` is also perfectly fine and should always work. 
-- `train.data_action_scale`: This is by default null, but can be set to a float value >= 1. It controls the size of the action space relative to the magnitude of actions in the demonstrations given. If this value is e.g. `1.25`, then the maximum action the training agent can take is only 125% the max action the demonstrations took. This is not used for any experiments apart from the very difficult PlugCharger environment.
+- `train.data_action_scale`: This is by default null, but can be set to a float value >= 1. It controls the size of the action space relative to the magnitude of actions in the demonstrations given. If this value is e.g. `1.25`, then the maximum action the training agent can take is only 125% the max action the demonstrations took. This is not used for any experiments apart from the very difficult PlugCharger environment, but certainly should make most tasks easier.
 - reward function: RFCL is designed to solve sparse reward problems (+1 on success, 0 otherwise), but can also solve tasks faster if given dense rewards. As there are Q networks trained to predict Q-values, it is recommended to normalize rewards to the range [0, 1] to avoid gradient/loss explosions.
 - demonstrations: RFCL is very robust to the demonstrations given, and can solve tasks even if the demonstrations are overly long, suboptimal, multimodal etc. But if you are able to collect demonstration data and care about success rate (as measured as being in a success state at the end of a episode), we recommend collecting demonstration data that do not stop upon success, but stops after achieving "stable success." An example for a cube picking task would be demonstrating picking up the cube, then holding it for a little bit before stopping the recording.
 
@@ -101,15 +101,19 @@ For starters, it is the **most demonstration and sample efficient** model-free m
 
 In terms of sample-efficiency, [Modem (TD-MPC + demonstrations)](https://nicklashansen.github.io/modemrl/) may be the most sample-efficient as they leverages world models, although the wall-time for in-simulation training is difficult to compare as it is down to implementation so it is unfair to compare "world models + planning + high sample efficiency" vs "model-free w/ no world models or planning + lower sample efficiency" on the dimension of wall-time.
 
-Regardless, RFCL is still the fastest method to solve the benchmarked tasks. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, PickCube can be solved in < 10 minutes, PegInsertionSide can be solved in <20 minutes, which are the fastest to date. For a table of wall-times, see this TODO. 
+Regardless, RFCL is still the fastest method to solve the benchmarked tasks. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, PickCube can be solved in < 10 minutes, PegInsertionSide can be solved in < 60 minutes, which are the fastest to date. For a table of wall-times, see this TODO.
 
 
 ### Distilling RL Generated Demonstrations from few Suboptimal Demonstrations
 
 It is well known most behavior cloning type methods often have difficulty when given suboptimal, multi-modal data, which is the case with human demonstrations in the Adroit environments and the motion planned demonstrations in the ManiSkill2 demonstrations. Standard behavior cloning using all 1000 ManiSkill2 demonstrations has difficulty getting any success on PegInsertionSide and PlugCharger. However, using RFCL to learn from just 10 demonstrations, we can produce a policy capable of solving both tasks, and then generate 1000s more demonstrations from a neural network policy. In our experiments, after generating 5000 demonstrations from the policies trained via RFCL and 10 motion planned demonstrations, behavior cloning is capable of achieving ~100% success on PegInsertionSide and PlugCharger.
 
-This could pave way for a scalable solution to generate usable demonstrations for a diverse set of environments and using behavior cloning type methods to more easily learn e.g. multi-task models, large foundation models etc. To make this easy, we provide a simple script `scripts/collect_demos.py` to rollout a RFCL trained policy across multiple workers to collect many demonstrations.
+This could pave way for a scalable solution to generate usable demonstrations for a diverse set of environments and using behavior cloning type methods to more easily learn e.g. multi-task models, large foundation models etc. To make this easy, we provide a simple script to rollout a RFCL trained policy across multiple workers to collect many demonstrations.
 
+```bash
+XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/collect_demos.py exps/path/to/model.jx \
+    num_envs=8 num_episodes=1000
+```
 
 ## Testing on New Environments
 

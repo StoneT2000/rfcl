@@ -17,7 +17,7 @@ import gymnasium as gym
 import jax
 import numpy as np
 import optax
-from configs.parse import parse_cfg
+from rfcl.utils.parse import parse_cfg
 from omegaconf import OmegaConf
 
 from rfcl.agents.sac import SAC, ActorCritic, SACConfig

@@ -13,7 +13,7 @@ import jax.numpy as jnp
 import numpy as np
 from chex import Array, PRNGKey
 from flax import struct
-
+from tqdm import tqdm
 from rfcl.utils import tools
 
 
@@ -58,6 +58,7 @@ class BaseEnvLoop(ABC):
         params: Any,
         apply_fn: Callable,
         steps_per_env: int,
+        progress_bar: bool
     ) -> Tuple[DefaultTimeStep, EnvLoopState]:
         raise NotImplementedError("Rollout not defined")
 
@@ -102,6 +103,7 @@ class GymLoop(BaseEnvLoop):
         params: Any,
         apply_fn: Callable,
         steps_per_env: int,
+        progress_bar: bool = False
     ):
         """
         Rollout across N parallelized non-jitted, non-state parameterized, environments with an actor function apply_fn and
@@ -134,7 +136,10 @@ class GymLoop(BaseEnvLoop):
             ep_lengths = loop_state.ep_len
 
         data = defaultdict(list)
-        for t in range(steps_per_env):
+        p_bar = range(steps_per_env)
+        if progress_bar:
+            p_bar = tqdm(range(steps_per_env))
+        for t in p_bar:
             rng_key, rng_fn_key = jax.random.split(rng_key)
             actions, aux = apply_fn(rng_fn_key, params, observations)
             actions = tools.any_to_np(actions)
@@ -375,6 +380,7 @@ class JaxLoop(BaseEnvLoop):
         params: Any,
         apply_fn: Callable[[PRNGKey, Any, EnvObs], Tuple[EnvAction, Any]],
         steps_per_env: int,
+        progress_bar: bool = False # unused
     ) -> Tuple[Any, EnvLoopState]:
         """
         Rollout across N parallelized environments with an actor function apply_fn and

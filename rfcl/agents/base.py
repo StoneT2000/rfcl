@@ -133,6 +133,7 @@ class BasePolicy:
         eval_loop: BaseEnvLoop,
         params: Params,
         apply_fn: Callable[[PRNGKey, EnvObs], EnvAction],
+        progress_bar: bool = False
     ):
         """
         Evaluation function that uses an evaluation loop and executes the apply_fn policy with the given params
@@ -148,6 +149,7 @@ class BasePolicy:
             params=params,
             apply_fn=apply_fn,
             steps_per_env=steps_per_env,
+            progress_bar=progress_bar
         )
         # TODO handle jax env infos
         if not self.jax_env:

@@ -36,7 +36,7 @@ class EnvMeta:
     env_suite: str
 
 def wrap_mujoco_env(
-        env, idx=0, record_video_path=None, wrappers=[],
+        env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()
     ):
     from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
     env = ContinuousTaskWrapper(env)
@@ -44,11 +44,11 @@ def wrap_mujoco_env(
     env = EpisodeStatsWrapper(env)
     for wrapper in wrappers:
         env = wrapper(env)
-    if record_video_path is not None and idx == 0:
-        env = RecordEpisodeWrapper(env, record_video_path, info_on_video=True)
+    if record_video_path is not None and (not record_episode_kwargs['record_episode_kwargs'] or idx == 0):
+        env = RecordEpisodeWrapper(env, record_video_path, trajectory_name=f"trajectory_{idx}", save_video=record_episode_kwargs["save_video"], save_trajectory=record_episode_kwargs['save_trajectory'], info_on_video=record_episode_kwargs['info_on_video'])
     return env
 
-def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, wrappers=[]):
+def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, wrappers=[], record_episode_kwargs=dict()):
     if not isinstance(cfg.env_kwargs, dict):
         cfg.env_kwargs = OmegaConf.to_container(cfg.env_kwargs)
     return make_env(
@@ -61,6 +61,7 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
         env_kwargs=cfg.env_kwargs,
         action_scale=cfg.action_scale,
         wrappers=wrappers,
+        record_episode_kwargs=record_episode_kwargs
     )
 
 
@@ -74,10 +75,13 @@ def make_env(
     env_kwargs=dict(),
     action_scale: np.ndarray = None,
     wrappers=[],
+    record_episode_kwargs=dict()
 ):
     """
     Utility function to create a jax/non-jax based environment given an env_id
     """
+    default_record_episode_kwargs = dict(save_video=True, save_trajectory=False, record_single=True, info_on_video=True)
+    record_episode_kwargs = {**default_record_episode_kwargs, **record_episode_kwargs}
     if jax_env:
         raise NotImplementedError()
     else:
@@ -144,6 +148,7 @@ def make_env(
                     env_kwargs=env_kwargs,
                     record_video_path=record_video_path,
                     wrappers=wrappers,
+                    record_episode_kwargs=record_episode_kwargs
                 )
                 for idx in range(num_envs)
             ]
