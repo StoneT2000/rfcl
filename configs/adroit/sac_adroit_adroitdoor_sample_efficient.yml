@@ -1,4 +1,4 @@
-base_config: "base_sac_d4rl.yml"
+base_config: "base_sac_adroit_sample_efficient.yml"
 env:
   env_id: "AdroitHandDoorSparse-v1"
   max_episode_steps: 200

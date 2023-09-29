@@ -1,4 +1,4 @@
-base_config: "base_sac_d4rl.yml"
+base_config: "base_sac_adroit.yml"
 env:
   env_id: "AdroitHandPenSparse-v1"
   max_episode_steps: 100

@@ -106,17 +106,17 @@ def make_env(
             context = "forkserver" # currently ms2 does not work with fork
         elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
             from rfcl.envs.maze.test_maze import PointMazeTestEnv
-            def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[]):
+            def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
                     return wrap_mujoco_env(
                         env, reward_type=reward_type,
-                        idx=idx, record_video_path=record_video_path, wrappers=wrappers,
+                        idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
 
                 return _init
         elif _meta_world.is_meta_world_env(env_id):
-            def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[]):
+            def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     from rfcl.envs.wrappers._meta_world import MetaWorldEnv
                     from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_HIDDEN, ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
@@ -126,7 +126,7 @@ def make_env(
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)
                     return wrap_mujoco_env(
                         env,
-                        idx=idx, record_video_path=record_video_path, wrappers=wrappers,
+                        idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
                 return _init
         else:

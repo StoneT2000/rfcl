@@ -27,8 +27,23 @@ def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1,
         demo_id = episode["episode_id"]
         demo = demo_dataset[f"traj_{demo_id}"]
         reset_kwargs = episode["reset_kwargs"]
-        env_states = np.array(demo["env_states"])
-        states_dataset[demo_id] = dict(state=env_states, seed=episode["episode_seed"], reset_kwargs=reset_kwargs, demo_id=demo_id)
+
+        # this is specifically for adroit envs that use options
+        if "initial_state_dict" in reset_kwargs["options"]:
+            for k in reset_kwargs["options"]["initial_state_dict"]:
+                reset_kwargs["options"]["initial_state_dict"][k] = np.array(reset_kwargs["options"]["initial_state_dict"][k])
+
+        # handle both dict like env states and vector env states
+        if isinstance(demo["env_states"], h5py.Dataset):
+            env_states = np.array(demo["env_states"])
+        else:
+            env_states = [dict(zip(demo["env_states"], t)) for t in zip(*demo["env_states"].values())]
+        seed = None
+        if "episode_seed" in episode:
+            seed = episode["episode_seed"]
+        elif "seed" in reset_kwargs:
+            seed = reset_kwargs["seed"]
+        states_dataset[demo_id] = dict(state=env_states, seed=seed, reset_kwargs=reset_kwargs, demo_id=demo_id)
 
         load_count += 1
         if load_count >= num_demos:

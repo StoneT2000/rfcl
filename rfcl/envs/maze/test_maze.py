@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from gymnasium import spaces
 from gymnasium import ObservationWrapper
 import numpy as np
-from .maze.point_maze import PointMazeEnv
+from .point_maze import PointMazeEnv
 from typing import Optional, Dict
 G = "g"
 R = "r"
