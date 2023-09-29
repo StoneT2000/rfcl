@@ -1,0 +1,7 @@
+base_config: "base_sac_ms2.yml"
+env:
+  env_id: "PegInsertionSide-v0"
+sac:
+  discount: 0.99
+train:
+  dataset_path: "demos/v0/rigid_body/PegInsertionSide-v0/trajectory.state.pd_ee_delta_pose.h5"

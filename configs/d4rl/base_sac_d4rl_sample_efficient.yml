@@ -1,0 +1,96 @@
+jax_env: False
+
+seed: 0
+algo: sac
+verbose: 1
+# Environment configuration
+env:
+  env_id: None
+  max_episode_steps: 200
+  num_envs: 8
+  jax_env: False
+  env_kwargs:
+    render_mode: "rgb_array"
+    reward_type: "sparse"
+eval_env:
+  num_envs: 2
+  max_episode_steps: 200
+
+sac:
+  num_seed_steps: 5_000
+  seed_with_policy: False
+  replay_buffer_capacity: 1_000_000
+  batch_size: 256
+  steps_per_env: 1
+  grad_updates_per_step: 80
+  actor_update_freq: 20
+
+  num_qs: 10
+  num_min_qs: 2
+
+  discount: 0.99
+  tau: 0.005
+  backup_entropy: False
+
+  eval_freq: 5_000
+  eval_steps: 1000
+
+  log_freq: 1000
+  save_freq: 10_000
+
+  learnable_temp: True
+  initial_temperature: 1.0
+  
+network:
+  actor:
+    type: "mlp"
+    arch_cfg:
+      features: [256, 256, 256]
+      output_activation: "relu"
+  critic:
+    type: "mlp"
+    arch_cfg:
+      features: [256, 256, 256]
+      output_activation: "relu"
+      use_layer_norm: True
+
+train:
+  actor_lr: 3e-4
+  critic_lr: 3e-4
+  steps: 1_000_000
+  dataset_path: None
+  shuffle_demos: False
+  num_demos: 1000
+  
+  stage1_offline_buffer: True
+  data_action_scale: null
+
+  ## Reverse curriculum configs
+  reverse_step_size: 8
+  initial_step_back: 1
+  start_step_sampler: "geometric"
+  curriculum_method: "per_trajectory"
+  per_trajectory_buffer_size: 3
+  demo_horizon_to_max_steps_ratio: 3
+
+  load_actor: True
+  load_critic: True
+  load_as_offline_buffer: True
+  load_as_online_buffer: False
+
+  ## Forward curriculum configs
+  forward_curriculum: "success_once_score"
+  staleness_coef: 0.1
+  staleness_temperature: 0.1
+  staleness_transform: "rankmin"
+  score_transform: "rankmin"
+  score_temperature: 0.1
+  num_seeds: 1000
+logger:
+  tensorboard: True
+  wandb: False
+
+  workspace: "exps"
+  project_name: "RFCL-D4RL-Sparse"
+  wandb_cfg:
+    group: "RFCL-D4RL-Sparse-SampleEfficient-Baseline"

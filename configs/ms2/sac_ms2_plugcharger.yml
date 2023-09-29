@@ -1,0 +1,14 @@
+base_config: "base_sac_ms2.yml"
+env:
+  env_id: "PlugCharger-v0"
+sac:
+  discount: 0.95
+  save_freq: 1_000_000
+  eval_freq: 100_000
+  batch_size: 512
+  replay_buffer_capacity: 2_000_000
+train:
+  dataset_path: "demos/v0/rigid_body/PlugCharger-v0/trajectory.state.pd_ee_delta_pose.h5"
+  data_action_scale: 1.25
+  demo_horizon_to_max_steps_ratio: 1.25
+  reverse_step_size: 2

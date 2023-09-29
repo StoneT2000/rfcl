@@ -1,0 +1,9 @@
+base_config: "base_sac_d4rl.yml"
+env:
+  env_id: "AdroitHandRelocateSparse-v1"
+  max_episode_steps: 200
+eval_env:
+  max_episode_steps: 200
+
+train:
+  dataset_path: "demos/d4rl-full/AdroitHandRelocateSparse-v1/trajectory.h5"

@@ -1,0 +1,7 @@
+base_config: "base_sac_ms2.yml"
+env:
+  env_id: "PickCube-v0"
+sac:
+  discount: 0.9
+train:
+  dataset_path: "demos/v0/rigid_body/PickCube-v0/trajectory.state.pd_ee_delta_pose.h5"
