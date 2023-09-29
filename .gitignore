@@ -1,7 +1,7 @@
 
 demos/
-data/
-exps/
+./data/
+./exps/**/*
 
 __pycache__
 *egg-info
