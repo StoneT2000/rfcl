@@ -7,7 +7,7 @@ Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from 
 <!-- todo anon: add in real names and links. Remove openreview -->
 ## Setup
 
-We recommend using conda, and installing from source as so
+We recommend using conda (or the faster mamba), and installing from source as so
 ```
 conda create -n "rfcl" "python==3.9"
 pip install --upgrade "jax[cuda12_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
@@ -24,7 +24,7 @@ pip install gymnasium-robotics==1.2.3 mani_skill2==0.5.3 # for Adroit and ManiSk
 
 We use the older metaworld environments running on old mujoco so we recommend doing this in a separate conda env
 ```
-mamba install -c conda-forge mesalib glew glfw patchelf
+conda install -c conda-forge mesalib glew glfw patchelf
 pip install "cython<3"
 pip install git+https://github.com/Farama-Foundation/Metaworld.git@04be337a12305e393c0caf0cbf5ec7755c7c8feb
 pip install shimmy[gym-v21]
@@ -118,3 +118,5 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/collect_demos.py exps/path/to
 ## Testing on New Environments
 
 To test on your own custom environments or tasks from another suite (e.g. [RoboMimic](https://robomimic.github.io/)), all you need to do is create an `InitialStateWrapper` TODO. We only benchmark on 22 environments in this work, but an example of how to add RoboMimic is detailed in this tutorial TODO LINK
+
+<!-- todo anon: acknowledgements -->
