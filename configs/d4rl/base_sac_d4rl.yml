@@ -61,8 +61,7 @@ train:
   dataset_path: None
   shuffle_demos: False
   num_demos: 1000
-  
-  stage1_offline_buffer: True
+
   data_action_scale: null
 
   ## Reverse curriculum configs
