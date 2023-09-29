@@ -2,3 +2,6 @@
 demos/
 data/
 exps/
+
+__pycache__
+*egg-info
