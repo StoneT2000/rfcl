@@ -74,7 +74,7 @@ def main(cfg: SACExperiment, model_path: str):
     cfg.sac.num_envs = cfg.env.num_envs
     video_path = cfg.out if cfg.out is not None else osp.join(osp.dirname(model_path), "../", "eval_videos")
 
-    env, env_meta = make_env_from_cfg(env_cfg, seed=cfg.seed, wrappers=[], video_path=video_path, record_episode_kwargs=dict(save_video=False, save_trajectory=True, record_single=False))
+    env, env_meta = make_env_from_cfg(env_cfg, seed=cfg.seed, wrappers=[], video_path=video_path, record_episode_kwargs=dict(save_video=True, save_trajectory=True, record_single=False, info_on_video=False))
     np.save(osp.join(video_path, "action_scale.npy"), env_cfg.action_scale)
     sample_obs, sample_acts = env_meta.sample_obs, env_meta.sample_acts
 
