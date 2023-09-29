@@ -53,7 +53,8 @@ dependencies = [
     # Other
     "tqdm",
     "dacite",
-    "matplotlib"
+    "matplotlib",
+    "h5py"
 ]
 dynamic = ["version"]
 
@@ -72,11 +73,10 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["rfcl", "rfcl.*"]
 
-# [tool.setuptools.package-data]
-
 # Linters and Test tools #######################################################
 
 [tool.black]
+line-length = 150
 safe = true
 
 [tool.isort]
