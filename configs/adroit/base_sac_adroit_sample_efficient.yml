@@ -89,6 +89,6 @@ logger:
   wandb: False
 
   workspace: "exps"
-  project_name: "RFCL-D4RL-Sparse"
+  project_name: "RFCL-Adroit-Sparse"
   wandb_cfg:
-    group: "RFCL-D4RL-Sparse-SampleEfficient-Baseline"
+    group: "RFCL-Adroit-Sparse-SampleEfficient-Baseline"
