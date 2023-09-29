@@ -39,6 +39,38 @@ We benchmark on 3 environment suites, each with their own demonstrations. We hav
 
 If you are interested in how the demonstrations are formatted, you can take a look at `scripts/demos/<env_suite>/format_dataset.py`. We take existing demonstrations from the environment suites and format them into the flexible [ManiSkill2 demonstration format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format), which is used as this format supports storing environment states out of the box which is needed by RFCL. Some environment demonstrations (e.g. Adroit human demonstrations) do not come with environment states, so we wrote some fairly complex code to extract them.
 
+## Training
+
+To train, run any one of the scripts for each environment suite under `scripts/<env_suite>` (ManiSkill2: ms2, Adroit: adroit, Metaworld: metaworld). 
+
+An example for training RFCL on ManiSkill2 (with the wall-time efficient hyperparameters) would be
+
+```bash
+demos=5
+env="peginsertion" # can be pickcube, stackcube, peginsertion, plugcharger
+XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py configs/ms2/sac_ms2_${env}.yml \
+    logger.exp_name="ms2/${env}/rfcl_fast_${demos}_demos_s${seed}" \
+    logger.wandb=True \
+    train.num_demos=${demos} \
+    seed=${seed} \
+    train.steps=2000000
+```
+
+And for sample-efficient hyperparameters (higher update to data ratio) you would use the _sample_efficient.yml file instead
+
+```bash
+demos=5
+env="peginsertion" # can be pickcube, stackcube, peginsertion, plugcharger
+XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py configs/ms2/sac_ms2_${env}_sample_efficient.yml \
+    logger.exp_name="ms2/${env}/rfcl_sample_efficient_${demos}_demos_s${seed}" \
+    logger.wandb=True \
+    train.num_demos=${demos} \
+    seed=${seed} \
+    train.steps=2000000
+```
+
+See `configs/<env_suite>` for all configurations if you want to understand the exact configurations used (e.g. SAC + Q-Ensemble configs, environment configs etc.)
+
 ## Testing on New Environments
 
 To test on your own custom environments or tasks from another suite (e.g. RoboMimic), all you need to do is create an `InitialStateWrapper` TODO. We only benchmark on 22 environments in this work, but an example of how to add RoboMimic is detailed in this tutorial TODO LINK

@@ -417,7 +417,7 @@ class SAC(BasePolicy):
         with open(save_path, "wb") as f:
             pickle.dump(state_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
             # TODO replace pickle with something more efficient for replay buffers?
-        print(f"Saving Checkpoint {save_path}.", "Time:", time.time() - stime)
+        # print(f"Saving Checkpoint {save_path}.", "Time:", time.time() - stime)
 
     def load_from_path(self, load_path: str):
         with open(load_path, "rb") as f:

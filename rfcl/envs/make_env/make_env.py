@@ -48,7 +48,7 @@ def wrap_mujoco_env(
         env = RecordEpisodeWrapper(env, record_video_path, info_on_video=True)
     return env
 
-def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, save_trajectory: bool = False, wrappers=[]):
+def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, wrappers=[]):
     if not isinstance(cfg.env_kwargs, dict):
         cfg.env_kwargs = OmegaConf.to_container(cfg.env_kwargs)
     return make_env(
@@ -58,7 +58,6 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
         num_envs=cfg.num_envs,
         seed=seed,
         record_video_path=video_path,
-        save_trajectory=save_trajectory,
         env_kwargs=cfg.env_kwargs,
         action_scale=cfg.action_scale,
         wrappers=wrappers,
@@ -72,7 +71,6 @@ def make_env(
     num_envs: Optional[int] = 1,
     seed: Optional[int] = 0,
     record_video_path: str = None,
-    save_trajectory: bool = False,
     env_kwargs=dict(),
     action_scale: np.ndarray = None,
     wrappers=[],
@@ -196,17 +194,3 @@ def get_initial_state_wrapper(env_id):
         return MetaWorldInitialStateWrapper
     else:
         raise NotImplementedError(f"Need to add the initial state wrapper for {env_id}")
-
-
-def get_demo_to_states_dataset_fn(env_id):
-    """
-    given env_id return function that reads a dataset path and returns a dataset of trajectories and states
-    """
-    if _mani_skill2.is_mani_skill2_env(env_id):
-        return ms2_demos_to_states_dataset
-    elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
-        return d4rl_demos_to_states_dataset
-    elif _meta_world.is_meta_world_env(env_id):
-        return metaworld_demos_to_states_dataset
-    else:
-        raise NotImplementedError()

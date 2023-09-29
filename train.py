@@ -6,6 +6,9 @@ Alternatively, go to the file defining each of the nested configurations and see
 import copy
 import warnings
 import os.path as osp
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 import sys
 from dataclasses import asdict, dataclass
 from typing import Optional
@@ -22,7 +25,6 @@ from rfcl.agents.sac.networks import DiagGaussianActor
 from rfcl.data.dataset import ReplayDataset, get_states_dataset
 from rfcl.envs.make_env import (
     EnvConfig,
-    get_demo_to_states_dataset_fn,
     get_initial_state_wrapper,
     make_env_from_cfg,
 )
@@ -31,8 +33,6 @@ from rfcl.envs.wrappers.forward_curriculum import SeedBasedForwardCurriculumWrap
 from rfcl.logger import LoggerConfig
 from rfcl.models import NetworkConfig, build_network_from_cfg
 from rfcl.utils.spaces import get_action_dim
-
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 @dataclass
 class TrainConfig:
@@ -108,6 +108,17 @@ def main(cfg: SACExperiment):
     cfg = from_dict(data_class=SACExperiment, data=OmegaConf.to_container(cfg))
     env_cfg = cfg.env
     eval_env_cfg = cfg.eval_env
+
+    # change exp name if it exists
+    orig_exp_name = cfg.logger.exp_name
+    exp_path = osp.join(cfg.logger.workspace, orig_exp_name)
+    if osp.exists(exp_path):
+        i = 1
+        while osp.exists(exp_path):
+            cfg.logger.exp_name = f"{orig_exp_name}_{i}"
+            exp_path = osp.join(cfg.logger.workspace, cfg.logger.exp_name)
+            i += 1
+        warnings.warn(f"{exp_path} already exists. Changing exp_name to {cfg.logger.exp_name}")
     video_path = osp.join(cfg.logger.workspace, cfg.logger.exp_name, "stage_1_videos")
 
     cfg.sac.num_envs = cfg.env.num_envs
@@ -228,13 +239,13 @@ def main(cfg: SACExperiment):
         # callback function to log reverse curriculum metrics and stop training once reverse curriculum is done
         nonlocal env, algo
         logger = algo.logger
-        traj_metadata = env.traj_metadata
+        demo_metadata = env.demo_metadata
         pts = []
         solved_frac = 0
-        for k in traj_metadata:
-            pts.append(traj_metadata[k].start_step / (traj_metadata[k].total_steps - 1))
-            solved_frac += int(traj_metadata[k].solved)
-        solved_frac = solved_frac / len(traj_metadata)
+        for k in demo_metadata:
+            pts.append(demo_metadata[k].start_step / (demo_metadata[k].total_steps - 1))
+            solved_frac += int(demo_metadata[k].solved)
+        solved_frac = solved_frac / len(demo_metadata)
         mean_start_step = np.mean(pts)
         logger.tb_writer.add_histogram("train_stats/start_step_frac_dist", pts, algo.state.total_env_steps)
         logger.tb_writer.add_scalar("train_stats/start_step_frac_avg", mean_start_step, algo.state.total_env_steps)
@@ -245,7 +256,7 @@ def main(cfg: SACExperiment):
             logger.wandb_run.log(data={"train_stats/start_step_frac_avg": mean_start_step}, step=algo.state.total_env_steps)
 
         if solved_frac > 0.9:
-            print("Reverse solved > 0.9 of trajectories. Stopping stage 1")
+            print("Reverse solved > 0.9 of demos. Stopping stage 1")
             return True
         return False
 
@@ -318,7 +329,6 @@ def main(cfg: SACExperiment):
     if cfg.train.forward_curriculum is not None and cfg.train.forward_curriculum != "None":
         env = SeedBasedForwardCurriculumWrapper(
             env,
-            states_dataset=states_dataset,
             score_transform=cfg.train.score_transform,
             score_temperature=cfg.train.score_temperature,
             staleness_transform=cfg.train.staleness_transform,

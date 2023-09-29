@@ -78,8 +78,10 @@ class InitialStateWrapper(gymnasium.Wrapper):
         obs_fns = []
         curr_env = self.env
         while True:
-            if hasattr(curr_env, "observation"):
+            try:
                 obs_fns.append(curr_env.get_wrapper_attr("observation"))
+            except AttributeError:
+                pass
             if hasattr(curr_env, "env"):
                 curr_env = curr_env.env
             else:
@@ -101,15 +103,16 @@ class InitialStateWrapper(gymnasium.Wrapper):
             self._state_seed = seed
         self._state_rng = np.random.RandomState(self._state_seed)
 
-    def set_demo_start_steps(self, id_to_start_steps, id_to_start_steps_density):
+    def set_demo_start_steps(self, t_is, id_to_start_steps, id_to_start_steps_density):
         """Set the distribution of start steps for each demo"""
         for demo_id in id_to_start_steps:
             self.demo_metadata[demo_id].start_steps = id_to_start_steps[demo_id]
             self.demo_metadata[demo_id].start_steps_density = id_to_start_steps_density[demo_id]
         for i, demo_id in enumerate(self.demo_ids):
-            self.demo_id_density[i] = self.demo_metadata[demo_id].start_steps[0] / self.demo_metadata[demo_id].total_steps
-            if self.demo_metadata[demo_id].start_steps[0] == 0:
-                self.demo_id_density[i] = 1e-5
+            t_i = t_is[demo_id]
+            self.demo_id_density[i] = t_i / self.demo_metadata[demo_id].total_steps
+            if t_i == 0:
+                self.demo_id_density[i] = 1e-6
         self.demo_id_density = self.demo_id_density / self.demo_id_density.sum()
 
     def reset(self, *, seed=None, options=None):
@@ -201,7 +204,7 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         self,
         env: VectorEnv,
         states_dataset,
-        curriculum_method: str = "per_trajectory",
+        curriculum_method: str = "per_demo",
         reverse_step_size: int = 8,
         per_demo_buffer_size: int = 3,
         start_step_sampler: str = "geometric",
@@ -221,14 +224,14 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         self.global_success_rate_history = create_filled_deque(per_demo_buffer_size * len(states_dataset), 0)  # only used for global curriculum
 
         self.demo_metadata = defaultdict(DemoCurriculumMetadata)
-        for traj_id in states_dataset:
-            self.demo_metadata[traj_id].start_step = max(len(self.states_dataset[traj_id]["state"]) - 1, 0)
-            self.demo_metadata[traj_id].total_steps = len(self.states_dataset[traj_id]["state"])
-            self.demo_metadata[traj_id].success_rate_buffer = create_filled_deque(per_demo_buffer_size, 0)
-            self.demo_metadata[traj_id].episode_steps_back = create_filled_deque(per_demo_buffer_size, -1)
+        for demo_id in states_dataset:
+            self.demo_metadata[demo_id].start_step = max(len(self.states_dataset[demo_id]["state"]) - 1, 0)
+            self.demo_metadata[demo_id].total_steps = len(self.states_dataset[demo_id]["state"])
+            self.demo_metadata[demo_id].success_rate_buffer = create_filled_deque(per_demo_buffer_size, 0)
+            self.demo_metadata[demo_id].episode_steps_back = create_filled_deque(per_demo_buffer_size, -1)
 
         self.curriculum_method = curriculum_method
-        assert self.curriculum_method in ["global", "per_trajectory"]
+        assert self.curriculum_method in ["global", "per_demo"]
 
         self.start_step_sampler = start_step_sampler
         assert self.start_step_sampler in ["fixed_point", "geometric"]
@@ -242,7 +245,10 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         Sync the demo metadata for initial start state wrappers.
         Call this whenever self.demo_metadata changes
         """
-        print("Syncing Metadata")
+        if self.verbose > 0: print("Syncing Metadata")
+        t_is = {}
+        for x in self.demo_metadata:
+            t_is[x] = self.demo_metadata[x].start_step
         if self.start_step_sampler == "geometric":
             start_steps = {}
             start_steps_densities = {}
@@ -258,7 +264,7 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
             start_steps = {x: np.array([self.demo_metadata[x].start_step]) for x in self.demo_metadata}
             start_steps_densities = {x: np.array([1]) for x in self.demo_metadata}
 
-        self.env.unwrapped.call("set_demo_start_steps", start_steps, start_steps_densities)  # sync curriculum settings
+        self.env.unwrapped.call("set_demo_start_steps", t_is, start_steps, start_steps_densities)  # sync curriculum settings
 
         # sync metadata and configs across linked reverse curriculum wrapper envs
         for link_env in self.link_envs:
@@ -274,9 +280,9 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
                 for final_info, exists in zip(info["final_info"], info["_final_info"]):
                     if not exists:
                         continue
-                    trajectory_id = final_info["trajectory_id"]
+                    demo_id = final_info["demo_id"]
                     success = final_info["success"]
-                    metadata = self.demo_metadata[trajectory_id]
+                    metadata = self.demo_metadata[demo_id]
 
                     # record successes only when steps back is equal to the current frontier / start step t_i assigned to demo tau_i
                     if final_info["steps_back"] == metadata.total_steps - metadata.start_step:
@@ -288,21 +294,21 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         return observation, reward, terminated, truncated, info
 
     def step_curriculum(self):
-        if self.curriculum_method == "per_trajectory":
+        if self.curriculum_method == "per_demo":
             change = False
-            for traj_id in self.states_dataset:
-                metadata = self.demo_metadata[traj_id]
+            for demo_id in self.states_dataset:
+                metadata = self.demo_metadata[demo_id]
                 running_success_rate_mean = np.mean(metadata.success_rate_buffer)
                 if running_success_rate_mean >= 1.0:
                     metadata.success_rate_buffer = create_filled_deque(self.per_demo_buffer_size, 0)
                     metadata.episode_steps_back = create_filled_deque(self.per_demo_buffer_size, -1)
                     if metadata.start_step > 0:
                         metadata.start_step = max(metadata.start_step - self.reverse_step_size, 0)
-                        print(f"Traj {traj_id} stepping back to {metadata.start_step}")
+                        if self.verbose > 0: print(f"Demo {demo_id} stepping back to {metadata.start_step}")
                         change = True
                     else:
                         if not metadata.solved:
-                            print(f"Traj {traj_id} is reverse solved!")
+                            if self.verbose > 0: print(f"Demo {demo_id} is reverse solved!")
                             metadata.solved = True
                             change = True
             if change:
@@ -311,15 +317,15 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
             change = False
             if np.mean(self.global_success_rate_history) >= GLOBAL_SUCCESS_RATE_THRESHOLD:
                 self.global_success_rate_history = create_filled_deque(self.per_demo_buffer_size * len(self.states_dataset), 0)
-                for traj_id in self.states_dataset:
-                    metadata = self.demo_metadata[traj_id]
+                for demo_id in self.states_dataset:
+                    metadata = self.demo_metadata[demo_id]
                     if metadata.start_step > 0:
                         metadata.start_step = max(metadata.start_step - self.reverse_step_size, 0)
-                        print(f"Traj {traj_id} stepping back to {metadata.start_step}")
+                        if self.verbose > 0: print(f"Demo {demo_id} stepping back to {metadata.start_step}")
                         change = True
                     else:
                         if not metadata.solved:
-                            print(f"Traj {traj_id} is reverse solved!")
+                            if self.verbose > 0: print(f"Demo {demo_id} is reverse solved!")
                             metadata.solved = True
                             change = True
             if change:

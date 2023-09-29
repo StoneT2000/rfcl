@@ -106,17 +106,17 @@ class ReplayDataset:
             self.eps_ids = list(eps_ids)
             load_count = len(eps_ids)
         for eps_id in self.eps_ids:
-            traj = demo_dataset[f"traj_{eps_id}"]
-            actions = np.array(traj["actions"])
+            demo = demo_dataset[f"traj_{eps_id}"]
+            actions = np.array(demo["actions"])
 
             if reward_mode == "sparse":
-                rewards = np.array(traj["success"]).astype(np.float_)
+                rewards = np.array(demo["success"]).astype(np.float_)
             elif reward_mode == "negative_sparse":
                 rewards = rewards - 1
             else:
-                rewards = np.array(traj["rewards"])
+                rewards = np.array(demo["rewards"])
             all_rewards.append(rewards)
-            obs = np.array(traj["obs"])
+            obs = np.array(demo["obs"])
             total_frames += len(rewards)
 
             all_observations.append(obs[:-1])

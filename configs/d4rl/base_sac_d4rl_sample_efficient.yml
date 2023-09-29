@@ -68,7 +68,7 @@ train:
   reverse_step_size: 8
   initial_step_back: 1
   start_step_sampler: "geometric"
-  curriculum_method: "per_trajectory"
+  curriculum_method: "per_demo"
   per_demo_buffer_size: 3
   demo_horizon_to_max_steps_ratio: 3
 

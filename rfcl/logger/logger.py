@@ -311,7 +311,7 @@ class Logger:
                             self.best_stats[name] = dict(val=scalar, step=step)
                             fmt_name = name.replace("/", "_")
                             self.save_fn(osp.join(self.model_path, f"best_{fmt_name}_ckpt.jx"))
-                            print(f"{name} new best at {step}: {scalar}")
+                            # print(f"{name} new best at {step}: {scalar}")
                     if self.tensorboard and not local_only:
                         self.tb_writer.add_scalar(name, scalar, self.start_step + step)
                     self.stats[name] = scalar

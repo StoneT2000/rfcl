@@ -1,7 +1,8 @@
 
-demos/
-./data/
-./exps/**/*
+/demos/
+/data/
+/exps/**/*
 
 __pycache__
 *egg-info
+/wandb
