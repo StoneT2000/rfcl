@@ -52,9 +52,11 @@ class TrainConfig:
 
     # forward curriculum configs
     forward_curriculum: str
+    staleness_transform: str
     staleness_coef: float
-    # staleness_temperature: 0.1
-    # score_temperature: 0.1
+    staleness_temperature: 0.1
+    score_transform: str
+    score_temperature: 0.1
     num_seeds: int
 
     # stage 2 training configs
