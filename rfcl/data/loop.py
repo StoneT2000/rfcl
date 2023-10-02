@@ -53,13 +53,7 @@ class BaseEnvLoop(ABC):
 
     @abstractmethod
     def rollout(
-        self,
-        rng_keys: List[PRNGKey],
-        loop_state: Union[EnvLoopState, None],
-        params: Any,
-        apply_fn: Callable,
-        steps_per_env: int,
-        progress_bar: bool
+        self, rng_keys: List[PRNGKey], loop_state: Union[EnvLoopState, None], params: Any, apply_fn: Callable, steps_per_env: int, progress_bar: bool
     ) -> Tuple[DefaultTimeStep, EnvLoopState]:
         raise NotImplementedError("Rollout not defined")
 
@@ -104,7 +98,7 @@ class GymLoop(BaseEnvLoop):
         params: Any,
         apply_fn: Callable,
         steps_per_env: int,
-        progress_bar: bool = False
+        progress_bar: bool = False,
     ):
         """
         Rollout across N parallelized non-jitted, non-state parameterized, environments with an actor function apply_fn and
@@ -197,7 +191,7 @@ class GymLoop(BaseEnvLoop):
                     if keep:
                         data["final_info"].append(info)
                     else:
-                        data["final_info"].append(None) # TEMP TODO
+                        data["final_info"].append(None)  # TEMP TODO
             for k, v in rb.items():
                 data[k].append(v)
             observations = next_observations
@@ -381,7 +375,7 @@ class JaxLoop(BaseEnvLoop):
         params: Any,
         apply_fn: Callable[[PRNGKey, Any, EnvObs], Tuple[EnvAction, Any]],
         steps_per_env: int,
-        progress_bar: bool = False # unused
+        progress_bar: bool = False,  # unused
     ) -> Tuple[Any, EnvLoopState]:
         """
         Rollout across N parallelized environments with an actor function apply_fn and

@@ -77,7 +77,6 @@ class SACConfig:
     Frequency at which to update the target network
     """
 
-    
     num_qs: Optional[int] = 2
     """
     Number of Q networks in Q ensemble

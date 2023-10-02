@@ -14,6 +14,7 @@ def is_meta_world_env(env_id: str):
         return False
     return env_id in ALL_V2_ENVIRONMENTS_GOAL_HIDDEN or env_id in ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
 
+
 def get_env_factory():
     def meta_world_env_factory(env_id, idx, seed, record_video_path, env_kwargs, wrappers=[]):
         from metaworld.envs import (
@@ -23,6 +24,7 @@ def get_env_factory():
 
         import metaworld
         from rfcl.envs.wrappers._meta_world import MetaWorldEnv
+
         def _init():
             env_list = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
             if env_id in ALL_V2_ENVIRONMENTS_GOAL_HIDDEN:
@@ -31,7 +33,7 @@ def get_env_factory():
             env = MetaWorldEnv(env_id)
             env.spec = EnvSpec(id=env_id, max_episode_steps=200)
             env = TimeLimit(env, max_episode_steps=200)
-           
+
             for wrapper in wrappers:
                 env = wrapper(env)
             if record_video_path is not None and idx == 0:
@@ -39,5 +41,5 @@ def get_env_factory():
             return env
 
         return _init
-    
+
     return meta_world_env_factory

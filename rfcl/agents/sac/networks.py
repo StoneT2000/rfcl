@@ -22,6 +22,7 @@ from rfcl.models.model import Params
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
+
 class Ensemble(nn.Module):
     net_cls: Type[nn.Module]
     num: int = 2
@@ -38,6 +39,7 @@ class Ensemble(nn.Module):
         )
         return ensemble()(*args)
 
+
 class Critic(nn.Module):
     feature_extractor: nn.Module
 
@@ -48,8 +50,10 @@ class Critic(nn.Module):
         value = nn.Dense(1)(features)
         return jnp.squeeze(value, -1)
 
+
 def default_init(scale: Optional[float] = jnp.sqrt(2)):
     return nn.initializers.orthogonal(scale)
+
 
 class DiagGaussianActor(nn.Module):
     feature_extractor: nn.Module
@@ -126,7 +130,7 @@ class ActorCritic:
         initial_temperature: float = 1.0,
         temperature_optim: optax.GradientTransformation = optax.adam(3e-4),
         num_qs: int = 10,
-        num_min_qs: int = 2
+        num_min_qs: int = 2,
     ) -> "ActorCritic":
         rng_key, actor_rng_key, critic_rng_key, value_rng_key, temp_rng_key = jax.random.split(rng_key, 5)
 
@@ -136,10 +140,12 @@ class ActorCritic:
         critic_cls = partial(Critic, feature_extractor=critic_feature_extractor)
         critic_def = Ensemble(critic_cls, num=num_qs)
         critic_model = Model.create(critic_def, critic_rng_key, [sample_obs, sample_acts], critic_optim)
-        
+
         target_critic_def = Ensemble(critic_cls, num=num_min_qs or num_qs)
         target_critic_model = Model.create(target_critic_def, critic_rng_key, [sample_obs, sample_acts])
-        target_critic_model = target_critic_model.replace(params=critic_model.params) # this makes the two models the same and we use a subsampler to subsample the target values
+        target_critic_model = target_critic_model.replace(
+            params=critic_model.params
+        )  # this makes the two models the same and we use a subsampler to subsample the target values
 
         temp = Model.create(Temperature(initial_temperature), temp_rng_key, tx=temperature_optim)
 

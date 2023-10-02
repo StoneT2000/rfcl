@@ -36,6 +36,7 @@ class TrainConfig:
 
     data_action_scale: Any
 
+
 @dataclass
 class SACNetworkConfig:
     actor: NetworkConfig
@@ -57,7 +58,7 @@ class SACExperiment:
 
     num_envs: int = 8
     num_episodes: int = 1000
-    out: str = None # where to save videos and trajectories
+    out: str = None  # where to save videos and trajectories
 
 
 from dacite import from_dict
@@ -80,12 +81,19 @@ def main(cfg: SACExperiment, model_path: str):
     cfg.sac.num_envs = cfg.env.num_envs
     video_path = cfg.out if cfg.out is not None else osp.join(osp.dirname(model_path), "../", "eval_videos")
 
-    env, env_meta = make_env_from_cfg(env_cfg, seed=cfg.seed, wrappers=[], video_path=video_path, record_episode_kwargs=dict(save_video=True, save_trajectory=True, record_single=False, info_on_video=False))
+    env, env_meta = make_env_from_cfg(
+        env_cfg,
+        seed=cfg.seed,
+        wrappers=[],
+        video_path=video_path,
+        record_episode_kwargs=dict(save_video=True, save_trajectory=True, record_single=False, info_on_video=False),
+    )
     np.save(osp.join(video_path, "action_scale.npy"), env_cfg.action_scale)
     sample_obs, sample_acts = env_meta.sample_obs, env_meta.sample_acts
 
     # create actor and critics models
     act_dims = get_action_dim(env_meta.act_space)
+
     def create_ac_model():
         actor = DiagGaussianActor(
             feature_extractor=build_network_from_cfg(cfg.network.actor),
@@ -103,7 +111,7 @@ def main(cfg: SACExperiment, model_path: str):
             critic_optim=optax.adam(learning_rate=cfg.train.critic_lr),
         )
         return ac
-    
+
     # create our algorithm
     ac = create_ac_model()
     algo = SAC(
@@ -111,11 +119,12 @@ def main(cfg: SACExperiment, model_path: str):
         eval_env=None,
         jax_env=cfg.env.jax_env,
         ac=ac,
-        logger_cfg=None, # set none so we don't create a new logger
+        logger_cfg=None,  # set none so we don't create a new logger
         cfg=cfg.sac,
     )
     # use a pretrained model
-    import pickle 
+    import pickle
+
     with open(model_path, "rb") as f:
         state_dict = pickle.load(f)
     previous_ac = flax.serialization.from_bytes(algo.state.ac, state_dict["train_state"].ac)
@@ -126,7 +135,13 @@ def main(cfg: SACExperiment, model_path: str):
     print(f"Running {cfg.num_envs} parallel environments")
     rng_key, eval_rng_key = jax.random.split(jax.random.PRNGKey(cfg.seed), 2)
     results = algo.evaluate(
-        eval_rng_key, env_cfg.num_envs, cfg.env.max_episode_steps * cfg.num_episodes // env_cfg.num_envs, algo.loop, algo.state.ac.actor, algo.state.ac.act, progress_bar=True
+        eval_rng_key,
+        env_cfg.num_envs,
+        cfg.env.max_episode_steps * cfg.num_episodes // env_cfg.num_envs,
+        algo.loop,
+        algo.state.ac.actor,
+        algo.state.ac.act,
+        progress_bar=True,
     )
     env.close()
     del env
@@ -138,6 +153,7 @@ def main(cfg: SACExperiment, model_path: str):
     for file in h5_files:
         os.remove(file)
         os.remove(file.replace(".h5", ".json"))
+
 
 if __name__ == "__main__":
     # infer config file from model path

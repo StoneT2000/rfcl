@@ -66,7 +66,7 @@ class SAC(BasePolicy):
         eval_env=None,
         logger_cfg: LoggerConfig = None,
         cfg: SACConfig = {},
-        offline_buffer = None,
+        offline_buffer=None,
     ):
         if isinstance(cfg, dict):
             self.cfg = SACConfig(**cfg)
@@ -84,9 +84,12 @@ class SAC(BasePolicy):
         )
 
         if jax_env:
+
             def seed_sampler(rng_key):
                 return env.action_space().sample(rng_key)
+
         else:
+
             def seed_sampler(rng_key):
                 return jax.random.uniform(
                     rng_key,
@@ -95,6 +98,7 @@ class SAC(BasePolicy):
                     maxval=1.0,
                     dtype=float,
                 )
+
         self.seed_sampler = seed_sampler
 
         # Define our buffer
@@ -142,7 +146,7 @@ class SAC(BasePolicy):
             data, loop_state = self.loop.rollout([env_rng_key], loop_state, actor, partial(self._sample_action, seed=seed), 1)
         return loop_state, data
 
-    def train(self, rng_key: PRNGKey, steps: int, callback_fn = None, verbose=1):
+    def train(self, rng_key: PRNGKey, steps: int, callback_fn=None, verbose=1):
         """
         Args :
             rng_key: PRNGKey,
@@ -201,9 +205,10 @@ class SAC(BasePolicy):
 
             self.logger.store(tag="train", **train_step_metrics.train)
             self.logger.store(tag="train_stats", **train_step_metrics.train_stats)
-            
+
             ### Log Metrics ###
-            if verbose: pbar.update(n=env_rollout_size)
+            if verbose:
+                pbar.update(n=env_rollout_size)
             total_time = time.time() - train_start_time
             if tools.reached_freq(self.state.total_env_steps, self.cfg.log_freq, step_size=env_rollout_size):
                 update_aux = tools.flatten_struct_to_dict(train_step_metrics.update)
@@ -213,7 +218,7 @@ class SAC(BasePolicy):
                     total=total_time,
                     SPS=self.state.total_env_steps / total_time,
                     total_env_steps=self.state.total_env_steps,
-                    **train_step_metrics.time
+                    **train_step_metrics.time,
                 )
             # log and export the metrics
             self.logger.log(self.state.total_env_steps)
@@ -231,6 +236,7 @@ class SAC(BasePolicy):
                 if stop:
                     print(f"Early stopping at {self.state.total_env_steps} env steps")
                     break
+
     def train_step(self, rng_key: PRNGKey, state: SACTrainState) -> Tuple[SACTrainState, TrainStepMetrics]:
         """
         Perform a single training step
@@ -298,7 +304,7 @@ class SAC(BasePolicy):
             loop_state = next_loop_state
 
         # log time metrics
-        
+
         for k in train_metrics:
             train_metrics[k] = np.concatenate(train_metrics[k]).flatten()
         rollout_time = time.time() - rollout_time_start
@@ -319,7 +325,7 @@ class SAC(BasePolicy):
                 batch = tools.combine(batch, offline_batch)
             else:
                 batch = self.replay_buffer.sample_random_batch(online_sample_key, self.cfg.batch_size * self.cfg.grad_updates_per_step)
-            
+
             batch = TimeStep(**batch)
             ac, update_aux = self.update_parameters(
                 update_rng_key,
@@ -354,42 +360,36 @@ class SAC(BasePolicy):
         assert self.cfg.grad_updates_per_step % self.cfg.actor_update_freq == 0
         update_rounds = self.cfg.grad_updates_per_step / self.cfg.actor_update_freq
         grad_updates_per_round = self.cfg.grad_updates_per_step / update_rounds
-        
+
         # jitted code to update critics and allow delayed actor updates. No for loops for fast compilation
         def _critic_updates(data, batch):
             (ac, critic_update_aux, rng_key) = data
             rng_key, critic_update_rng_key = jax.random.split(rng_key, 2)
             new_critic, critic_update_aux = loss.update_critic(
-                critic_update_rng_key,
-                ac,
-                batch,
-                self.cfg.discount,
-                self.cfg.backup_entropy,
-                self.cfg.num_min_qs,
-                self.cfg.num_qs
+                critic_update_rng_key, ac, batch, self.cfg.discount, self.cfg.backup_entropy, self.cfg.num_min_qs, self.cfg.num_qs
             )
             ac = ac.replace(critic=new_critic)
             new_target = loss.update_target(ac.critic, ac.target_critic, self.cfg.tau)
             ac = ac.replace(target_critic=new_target)
             return (ac, critic_update_aux, rng_key), None
-        
+
         def _update(data, batch):
             # for each update, we perform a number of critic updates followed by an actor update depending on actor update frequency
             (ac, critic_update_aux, actor_update_aux, temp_update_aux, rng_key) = data
-            
-            mini_batches = jax.tree_util.tree_map(lambda x : jnp.array(jnp.split(x, grad_updates_per_round)), batch)
+
+            mini_batches = jax.tree_util.tree_map(lambda x: jnp.array(jnp.split(x, grad_updates_per_round)), batch)
             (ac, critic_update_aux, rng_key), _ = jax.lax.scan(_critic_updates, (ac, critic_update_aux, rng_key), mini_batches)
-            
+
             rng_key, actor_update_rng_key = jax.random.split(rng_key, 2)
-            mini_batch = mini_batch = jax.tree_util.tree_map(lambda x : x[-mini_batch_size:], batch)
+            mini_batch = mini_batch = jax.tree_util.tree_map(lambda x: x[-mini_batch_size:], batch)
             new_actor, actor_update_aux = loss.update_actor(actor_update_rng_key, ac, mini_batch)
             if self.cfg.learnable_temp:
                 new_temp, temp_update_aux = loss.update_temp(ac.temp, actor_update_aux.entropy, self.cfg.target_entropy)
             ac = ac.replace(actor=new_actor, temp=new_temp)
             return (ac, critic_update_aux, actor_update_aux, temp_update_aux, rng_key), None
-        
+
         # TODO this step may use extra GPU memory.
-        mini_batches = jax.tree_util.tree_map(lambda x : jnp.array(jnp.split(x, update_rounds)), batch)
+        mini_batches = jax.tree_util.tree_map(lambda x: jnp.array(jnp.split(x, update_rounds)), batch)
         init_vals = (ac, critic_update_aux, actor_update_aux, temp_update_aux, rng_key)
         (ac, critic_update_aux, actor_update_aux, temp_update_aux, rng_key), _ = jax.lax.scan(_update, init_vals, mini_batches)
 

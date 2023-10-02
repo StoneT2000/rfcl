@@ -22,6 +22,8 @@ from rfcl.envs.wrappers.common import (
 
 
 THIS_FILE = "rfcl/envs/make_env/make_env.py"
+
+
 @dataclass
 class EnvConfig:
     env_id: str
@@ -40,18 +42,26 @@ class EnvMeta:
     act_space: spaces.Space
     env_suite: str
 
-def wrap_mujoco_env(
-        env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()
-    ):
+
+def wrap_mujoco_env(env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()):
     from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
+
     env = ContinuousTaskWrapper(env)
     env = SparseRewardWrapper(env)
     env = EpisodeStatsWrapper(env)
     for wrapper in wrappers:
         env = wrapper(env)
-    if record_video_path is not None and (not record_episode_kwargs['record_single'] or idx == 0):
-        env = RecordEpisodeWrapper(env, record_video_path, trajectory_name=f"trajectory_{idx}", save_video=record_episode_kwargs["save_video"], save_trajectory=record_episode_kwargs['save_trajectory'], info_on_video=record_episode_kwargs['info_on_video'])
+    if record_video_path is not None and (not record_episode_kwargs["record_single"] or idx == 0):
+        env = RecordEpisodeWrapper(
+            env,
+            record_video_path,
+            trajectory_name=f"trajectory_{idx}",
+            save_video=record_episode_kwargs["save_video"],
+            save_trajectory=record_episode_kwargs["save_trajectory"],
+            info_on_video=record_episode_kwargs["info_on_video"],
+        )
     return env
+
 
 def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, wrappers=[], record_episode_kwargs=dict()):
     if not isinstance(cfg.env_kwargs, dict):
@@ -66,7 +76,7 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
         env_kwargs=cfg.env_kwargs,
         action_scale=cfg.action_scale,
         wrappers=wrappers,
-        record_episode_kwargs=record_episode_kwargs
+        record_episode_kwargs=record_episode_kwargs,
     )
 
 
@@ -80,7 +90,7 @@ def make_env(
     env_kwargs=dict(),
     action_scale: np.ndarray = None,
     wrappers=[],
-    record_episode_kwargs=dict()
+    record_episode_kwargs=dict(),
 ):
     """
     Utility function to create a jax/non-jax based environment given an env_id
@@ -90,14 +100,13 @@ def make_env(
     if jax_env:
         raise NotImplementedError()
     else:
-
         context = "fork"
         env_action_scale = 1
         if action_scale is not None:
             action_scale = np.array(action_scale)
             env_action_scale = action_scale
         rescale_action_wrapper = lambda x: gymnasium.wrappers.RescaleAction(x, -env_action_scale, env_action_scale)
-        clip_wrapper = lambda x : gymnasium.wrappers.ClipAction(x)
+        clip_wrapper = lambda x: gymnasium.wrappers.ClipAction(x)
 
         reward_type = "dense"
         if "reward_type" in env_kwargs:
@@ -108,19 +117,21 @@ def make_env(
         if _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
             wrappers = [ContinuousTaskWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
-            context = "forkserver" # currently ms2 does not work with fork
+            context = "forkserver"  # currently ms2 does not work with fork
         elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
             from rfcl.envs.maze.test_maze import PointMazeTestEnv
+
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
                     return wrap_mujoco_env(
-                        env,
-                        idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
+                        env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
 
                 return _init
+
         elif _meta_world.is_meta_world_env(env_id):
+
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     from gymnasium.envs.registration import EnvSpec
@@ -134,13 +145,14 @@ def make_env(
                     env = MetaWorldEnv(env_id, **env_kwargs)
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)
                     return wrap_mujoco_env(
-                        env,
-                        idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
+                        env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
+
                 return _init
+
         else:
             raise NotImplementedError()
-        
+
         wrappers = [
             (lambda x: TimeLimit(x, max_episode_steps=max_episode_steps)),
             *wrappers,
@@ -157,7 +169,7 @@ def make_env(
                     env_kwargs=env_kwargs,
                     record_video_path=record_video_path,
                     wrappers=wrappers,
-                    record_episode_kwargs=record_episode_kwargs
+                    record_episode_kwargs=record_episode_kwargs,
                 )
                 for idx in range(num_envs)
             ]
@@ -183,12 +195,14 @@ def get_env_suite(env_id):
     """
     if _mani_skill2.is_mani_skill2_env(env_id):
         return "mani_skill2"
-    elif 'AntMazeTest' in env_id.split('-') or 'PointMazeTest' in env_id.split('-') or _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
+    elif "AntMazeTest" in env_id.split("-") or "PointMazeTest" in env_id.split("-") or _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
         return "gymnasium_robotics"
     elif _meta_world.is_meta_world_env(env_id):
         return "meta_world"
     else:
-        warnings.warn(f"Unknown environment suite for env {env_id}. You can safely ignore this. If this is a new environment we recommend updating {THIS_FILE} file with the right details.")
+        warnings.warn(
+            f"Unknown environment suite for env {env_id}. You can safely ignore this. If this is a new environment we recommend updating {THIS_FILE} file with the right details."
+        )
         return "unknown"
 
 
@@ -199,12 +213,15 @@ def get_initial_state_wrapper(env_id):
     """
     if _mani_skill2.is_mani_skill2_env(env_id):
         from rfcl.envs.wrappers._maniskill2 import ManiSkill2InitialStateWrapper
+
         return ManiSkill2InitialStateWrapper
     elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
         from rfcl.envs.wrappers._adroit import AdroitInitialStateWrapper
+
         return AdroitInitialStateWrapper
     elif _meta_world.is_meta_world_env(env_id):
         from rfcl.envs.wrappers._meta_world import MetaWorldInitialStateWrapper
+
         return MetaWorldInitialStateWrapper
     else:
         raise NotImplementedError(f"Need to add the initial state wrapper for {env_id}")

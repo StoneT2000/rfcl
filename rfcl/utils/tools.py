@@ -14,6 +14,7 @@ def is_jax_arr(x: Array):
 def copy_arr(x: Array):
     return x.copy()
 
+
 def combine(one_dict, other_dict):
     # Code from https://github.com/ikostrikov/rlpd/
     combined = {}
@@ -22,18 +23,17 @@ def combine(one_dict, other_dict):
         if isinstance(v, dict):
             combined[k] = combine(v, other_dict[k])
         else:
-            tmp = np.empty(
-                (v.shape[0] + other_dict[k].shape[0], *v.shape[1:]), dtype=v.dtype
-            )
+            tmp = np.empty((v.shape[0] + other_dict[k].shape[0], *v.shape[1:]), dtype=v.dtype)
             tmp[0::2] = v
             tmp[1::2] = other_dict[k]
             combined[k] = tmp
 
     return combined
 
+
 def reached_freq(t, freq, step_size=1):
     """
-    Returns True if `freq > 0` and time `t` has reached the frequency. Gives a leeway of size `step_size - 1`. This assumes `t` only ever increments 
+    Returns True if `freq > 0` and time `t` has reached the frequency. Gives a leeway of size `step_size - 1`. This assumes `t` only ever increments
     by size `step_size` and allows any `t` within `step_size` of `freq` to return True.
 
     Returns False otherwise
@@ -49,6 +49,7 @@ def reached_freq(t, freq, step_size=1):
     if freq > 0 and (t - step_size) // freq < t // freq:
         return True
     return False
+
 
 def flatten_struct_to_dict(tree):
     """

@@ -6,11 +6,13 @@ class SparseRewardWrapper(gym.Wrapper):
         o, _, terminated, truncated, info = self.env.step(action)
         return o, int(info["success"]), terminated, truncated, info
 
+
 class ContinuousTaskWrapper(gym.Wrapper):
     """
     Makes a task continuous by disabling any early terminations, allowing episode to only end
     when truncated=True (timelimit reached)
     """
+
     def __init__(self, env) -> None:
         super().__init__(env)
 
@@ -24,10 +26,12 @@ class ContinuousTaskWrapper(gym.Wrapper):
         terminated = False
         return observation, reward, terminated, truncated, info
 
+
 class EpisodeStatsWrapper(gym.Wrapper):
     """
     Adds additional info. Anything that goes in the stats wrapper is logged to tensorboard/wandb under train_stats and test_stats
     """
+
     def reset(self, *, seed=None, options=None):
         self.eps_seed = seed
         obs, info = super().reset(seed=seed, options=options)
@@ -45,7 +49,9 @@ class EpisodeStatsWrapper(gym.Wrapper):
         info["seed"] = self.eps_seed
         self.success_once = self.success_once | info["success"]
         info["stats"] = dict(
-            success_at_end=int(info["success"]), # this is the success rate used for comparing algorithm performances, which is more difficult but more realistic
+            success_at_end=int(
+                info["success"]
+            ),  # this is the success rate used for comparing algorithm performances, which is more difficult but more realistic
             success=self.success_once,
         )
         return observation, reward, terminated, truncated, info

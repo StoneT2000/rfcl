@@ -133,7 +133,7 @@ class BasePolicy:
         eval_loop: BaseEnvLoop,
         params: Params,
         apply_fn: Callable[[PRNGKey, EnvObs], EnvAction],
-        progress_bar: bool = False
+        progress_bar: bool = False,
     ):
         """
         Evaluation function that uses an evaluation loop and executes the apply_fn policy with the given params
@@ -149,7 +149,7 @@ class BasePolicy:
             params=params,
             apply_fn=apply_fn,
             steps_per_env=steps_per_env,
-            progress_bar=progress_bar
+            progress_bar=progress_bar,
         )
         # TODO handle jax env infos
         if not self.jax_env:
@@ -165,7 +165,7 @@ class BasePolicy:
         if not self.jax_env:
             for info in final_infos:
                 if info is not None and "stats" in info:
-                        stats_list.append(info["stats"])
+                    stats_list.append(info["stats"])
         stats = defaultdict(list)
         {stats[key].append(sub[key]) for sub in stats_list for key in sub}
         return dict(eval_ep_rets=eval_ep_rets, eval_ep_lens=eval_ep_lens, stats=stats)

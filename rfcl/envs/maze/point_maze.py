@@ -321,9 +321,7 @@ class PointMazeEnv(MazeEnv, EzPickle):
         reset_target: bool = False,
         **kwargs,
     ):
-        point_xml_file_path = path.join(
-            path.dirname((__file__)), "./point.xml"
-        )
+        point_xml_file_path = path.join(path.dirname((__file__)), "./point.xml")
         super().__init__(
             agent_xml_path=point_xml_file_path,
             maze_map=maze_map,
@@ -351,9 +349,7 @@ class PointMazeEnv(MazeEnv, EzPickle):
         obs_shape: tuple = self.point_env.observation_space.shape
         self.observation_space = spaces.Dict(
             dict(
-                observation=spaces.Box(
-                    -np.inf, np.inf, shape=obs_shape, dtype="float64"
-                ),
+                observation=spaces.Box(-np.inf, np.inf, shape=obs_shape, dtype="float64"),
                 achieved_goal=spaces.Box(-np.inf, np.inf, shape=(2,), dtype="float64"),
                 desired_goal=spaces.Box(-np.inf, np.inf, shape=(2,), dtype="float64"),
             )
@@ -393,9 +389,7 @@ class PointMazeEnv(MazeEnv, EzPickle):
 
         obs, info = self.point_env.reset(seed=seed)
         obs_dict = self._get_obs(obs)
-        info["success"] = bool(
-            np.linalg.norm(obs_dict["achieved_goal"] - self.goal) <= 0.45
-        )
+        info["success"] = bool(np.linalg.norm(obs_dict["achieved_goal"] - self.goal) <= 0.45)
 
         return obs_dict, info
 
@@ -404,8 +398,7 @@ class PointMazeEnv(MazeEnv, EzPickle):
             obs, _, _, _, info = self.point_env.step(action)
         self.point_env.set_state(self.point_env.data.qpos, self.point_env.data.qvel * 0)
         obs_dict = self._get_obs(obs)
-        
-        
+
         qpos = self.point_env.data.qpos
         xdist = np.abs(self.collision_wall_positions[:, 0] - qpos[0])
         ydist = np.abs(self.collision_wall_positions[:, 1] - qpos[1])
@@ -415,20 +408,16 @@ class PointMazeEnv(MazeEnv, EzPickle):
         reward = self.compute_reward(obs_dict["achieved_goal"], self.goal, info)
         terminated = self.compute_terminated(obs_dict["achieved_goal"], self.goal, info)
         truncated = self.compute_truncated(obs_dict["achieved_goal"], self.goal, info)
-        info["success"] = bool(
-            np.linalg.norm(obs_dict["achieved_goal"] - self.goal) <= 0.45
-        ) and (self.collided_with_wall_once == 0)
+        info["success"] = bool(np.linalg.norm(obs_dict["achieved_goal"] - self.goal) <= 0.45) and (self.collided_with_wall_once == 0)
         if self.collided_with_wall_once == 1 and reward > 0:
             reward = 0
         # Update the goal position if necessary
         self.update_goal(obs_dict["achieved_goal"])
-        
+
         return obs_dict, reward, terminated, truncated, info
 
     def update_target_site_pos(self):
-        self.point_env.model.site_pos[self.target_site_id] = np.append(
-            self.goal, self.maze.maze_height / 2 * self.maze.maze_size_scaling
-        )
+        self.point_env.model.site_pos[self.target_site_id] = np.append(self.goal, self.maze.maze_height / 2 * self.maze.maze_size_scaling)
 
     def _get_obs(self, point_obs) -> Dict[str, np.ndarray]:
         achieved_goal = point_obs[:2]

@@ -5,6 +5,7 @@ from gymnasium.wrappers import RecordVideo
 def is_gymnasium_robotics_env(env_id: str):
     try:
         import gymnasium_robotics
+
         pass
     except ImportError:
         return False
@@ -21,4 +22,5 @@ def env_factory(env_id: str, idx: int, env_kwargs=dict(), record_video_path: str
         if record_video_path is not None and idx == 0:
             env = RecordVideo(env, record_video_path, episode_trigger=lambda x: True)
         return env
+
     return _init

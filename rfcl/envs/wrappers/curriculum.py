@@ -245,7 +245,8 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         Sync the demo metadata for initial start state wrappers.
         Call this whenever self.demo_metadata changes
         """
-        if self.verbose > 0: print("Syncing Metadata")
+        if self.verbose > 0:
+            print("Syncing Metadata")
         t_is = {}
         for x in self.demo_metadata:
             t_is[x] = self.demo_metadata[x].start_step
@@ -304,11 +305,13 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
                     metadata.episode_steps_back = create_filled_deque(self.per_demo_buffer_size, -1)
                     if metadata.start_step > 0:
                         metadata.start_step = max(metadata.start_step - self.reverse_step_size, 0)
-                        if self.verbose > 0: print(f"Demo {demo_id} stepping back to {metadata.start_step}")
+                        if self.verbose > 0:
+                            print(f"Demo {demo_id} stepping back to {metadata.start_step}")
                         change = True
                     else:
                         if not metadata.solved:
-                            if self.verbose > 0: print(f"Demo {demo_id} is reverse solved!")
+                            if self.verbose > 0:
+                                print(f"Demo {demo_id} is reverse solved!")
                             metadata.solved = True
                             change = True
             if change:
@@ -321,11 +324,13 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
                     metadata = self.demo_metadata[demo_id]
                     if metadata.start_step > 0:
                         metadata.start_step = max(metadata.start_step - self.reverse_step_size, 0)
-                        if self.verbose > 0: print(f"Demo {demo_id} stepping back to {metadata.start_step}")
+                        if self.verbose > 0:
+                            print(f"Demo {demo_id} stepping back to {metadata.start_step}")
                         change = True
                     else:
                         if not metadata.solved:
-                            if self.verbose > 0: print(f"Demo {demo_id} is reverse solved!")
+                            if self.verbose > 0:
+                                print(f"Demo {demo_id} is reverse solved!")
                             metadata.solved = True
                             change = True
             if change:

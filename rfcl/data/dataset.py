@@ -39,7 +39,7 @@ def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1,
             env_states = np.array(demo["env_states"])
         else:
             env_states = [dict(zip(demo["env_states"], t)) for t in zip(*demo["env_states"].values())]
-        
+
         # lightly truncate trajectory to improve reverse curriculum speed, it is not necessary however
         num_steps_in_success = demo["success"][:].sum()
         if num_steps_in_success > 50:
@@ -72,14 +72,14 @@ class ReplayDataset:
 
     num_demos : int - the number of demonstrations to load
 
-    reward_mode : str - the reward mode to use. If "sparse", will relabel rewards in the demonstration frames based on 
-        whether the frame is a success state (+1) or not (0). If "negative_sparse", will also relabel rewards but with 
+    reward_mode : str - the reward mode to use. If "sparse", will relabel rewards in the demonstration frames based on
+        whether the frame is a success state (+1) or not (0). If "negative_sparse", will also relabel rewards but with
         0 for success states and -1 otherwise
-    
+
     eps_ids : list of episode/demonstration ids to load from the dataset as opposed to sampling with the code in here.
 
-    data_action_scale : scales the magnitude of each action dimension of all demonstration actions and saves the 
-        corresponding action scale to be used in an action rescale wrapper. Makes problem easier by reducing the 
+    data_action_scale : scales the magnitude of each action dimension of all demonstration actions and saves the
+        corresponding action scale to be used in an action rescale wrapper. Makes problem easier by reducing the
         action space size and constraining it to a factor of what the demonstrations use
 
     action_scale : pass in a hardcoded action scale. If none, uses data_action_scale instead to generate it

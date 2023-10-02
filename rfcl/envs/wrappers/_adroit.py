@@ -42,6 +42,7 @@ class AdroitInitialStateWrapper(InitialStateWrapper):
         env: AdroitHandDoorEnv = self.env.unwrapped
         return env._get_obs()
 
+
 def clean_trajectories(h5_file: h5py.File, json_dict: dict, prune_empty_action=True):
     """Clean trajectories by renaming and pruning trajectories in place.
 

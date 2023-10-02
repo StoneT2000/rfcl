@@ -57,7 +57,6 @@ class Maze:
         maze_size_scaling: float,
         maze_height: float,
     ):
-
         self._maze_map = maze_map
         self._maze_size_scaling = maze_size_scaling
         self._maze_height = maze_height
@@ -218,11 +217,7 @@ class Maze:
         )
 
         # Add the combined cell locations (goal/reset) to goal and reset
-        if (
-            not maze._unique_goal_locations
-            and not maze._unique_reset_locations
-            and not maze._combined_locations
-        ):
+        if not maze._unique_goal_locations and not maze._unique_reset_locations and not maze._combined_locations:
             # If there are no given "r", "g" or "c" cells in the maze data structure,
             # any empty cell can be a reset or goal location at initialization.
             maze._combined_locations = empty_locations
@@ -260,21 +255,16 @@ class MazeEnv(GoalEnv):
         position_noise_range: float = 0.25,
         **kwargs,
     ):
-
         self.reward_type = reward_type
         self.continuing_task = continuing_task
         self.reset_target = reset_target
-        self.maze, self.tmp_xml_file_path = Maze.make_maze(
-            agent_xml_path, maze_map, maze_size_scaling, maze_height
-        )
+        self.maze, self.tmp_xml_file_path = Maze.make_maze(agent_xml_path, maze_map, maze_size_scaling, maze_height)
 
         self.position_noise_range = position_noise_range
 
     def generate_target_goal(self) -> np.ndarray:
         assert len(self.maze.unique_goal_locations) > 0
-        goal_index = self.np_random.integers(
-            low=0, high=len(self.maze.unique_goal_locations)
-        )
+        goal_index = self.np_random.integers(low=0, high=len(self.maze.unique_goal_locations))
         goal = self.maze.unique_goal_locations[goal_index].copy()
         return goal
 
@@ -283,12 +273,8 @@ class MazeEnv(GoalEnv):
 
         # While reset position is close to goal position
         reset_pos = self.goal.copy()
-        while (
-            np.linalg.norm(reset_pos - self.goal) <= 0.5 * self.maze.maze_size_scaling
-        ):
-            reset_index = self.np_random.integers(
-                low=0, high=len(self.maze.unique_reset_locations)
-            )
+        while np.linalg.norm(reset_pos - self.goal) <= 0.5 * self.maze.maze_size_scaling:
+            reset_index = self.np_random.integers(low=0, high=len(self.maze.unique_reset_locations))
             reset_pos = self.maze.unique_reset_locations[reset_index].copy()
 
         return reset_pos
@@ -318,8 +304,7 @@ class MazeEnv(GoalEnv):
                 assert self.maze.map_length > options["goal_cell"][0]
                 assert self.maze.map_width > options["goal_cell"][1]
                 assert (
-                    self.maze.maze_map[options["goal_cell"][0]][options["goal_cell"][1]]
-                    != 1
+                    self.maze.maze_map[options["goal_cell"][0]][options["goal_cell"][1]] != 1
                 ), f"Goal can't be placed in a wall cell, {options['goal_cell']}"
 
                 goal = self.maze.cell_rowcol_to_xy(options["goal_cell"])
@@ -335,10 +320,7 @@ class MazeEnv(GoalEnv):
                 assert self.maze.map_length > options["reset_cell"][0]
                 assert self.maze.map_width > options["reset_cell"][1]
                 assert (
-                    self.maze.maze_map[options["reset_cell"][0]][
-                        options["reset_cell"][1]
-                    ]
-                    != 1
+                    self.maze.maze_map[options["reset_cell"][0]][options["reset_cell"][1]] != 1
                 ), f"Reset can't be placed in a wall cell, {options['reset_cell']}"
 
                 reset_pos = self.maze.cell_rowcol_to_xy(options["reset_cell"])
@@ -358,35 +340,21 @@ class MazeEnv(GoalEnv):
         """Pass an x,y coordinate and it will return the same coordinate with a noise addition
         sampled from a uniform distribution
         """
-        noise_x = (
-            self.np_random.uniform(
-                low=-self.position_noise_range, high=self.position_noise_range
-            )
-            * self.maze.maze_size_scaling
-        )
-        noise_y = (
-            self.np_random.uniform(
-                low=-self.position_noise_range, high=self.position_noise_range
-            )
-            * self.maze.maze_size_scaling
-        )
+        noise_x = self.np_random.uniform(low=-self.position_noise_range, high=self.position_noise_range) * self.maze.maze_size_scaling
+        noise_y = self.np_random.uniform(low=-self.position_noise_range, high=self.position_noise_range) * self.maze.maze_size_scaling
         xy_pos[0] += noise_x
         xy_pos[1] += noise_y
 
         return xy_pos
 
-    def compute_reward(
-        self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info
-    ) -> float:
+    def compute_reward(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info) -> float:
         distance = np.linalg.norm(achieved_goal - desired_goal, axis=-1)
         if self.reward_type == "dense":
             return np.exp(-distance)
         elif self.reward_type == "sparse":
             return (distance <= 0.45).astype(np.float64)
 
-    def compute_terminated(
-        self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info
-    ) -> bool:
+    def compute_terminated(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info) -> bool:
         if not self.continuing_task:
             # If task is episodic terminate the episode when the goal is reached
             return bool(np.linalg.norm(achieved_goal - desired_goal) <= 0.45)
@@ -414,9 +382,7 @@ class MazeEnv(GoalEnv):
             # Update the position of the target site for visualization
             self.update_target_site_pos()
 
-    def compute_truncated(
-        self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info
-    ) -> bool:
+    def compute_truncated(self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info) -> bool:
         return False
 
     def update_target_site_pos(self, pos):
