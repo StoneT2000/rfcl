@@ -4,7 +4,7 @@ Models for SAC
 import os
 from functools import partial
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Type
 
 import flax
 import flax.linen as nn
@@ -13,10 +13,11 @@ import jax.numpy as jnp
 import optax
 from chex import Array, PRNGKey
 from flax import struct
+from tensorflow_probability.substrates import jax as tfp
+
 from rfcl.models import Model
 from rfcl.models.model import Params
-from tensorflow_probability.substrates import jax as tfp
-from typing import Type
+
 
 tfd = tfp.distributions
 tfb = tfp.bijectors

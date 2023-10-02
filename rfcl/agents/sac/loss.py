@@ -8,10 +8,11 @@ import jax
 import jax.numpy as jnp
 from chex import Array, PRNGKey
 from flax import struct
-from rfcl.models import Model
 
 from rfcl.agents.sac.config import TimeStep
 from rfcl.agents.sac.networks import ActorCritic
+from rfcl.models import Model
+
 
 @struct.dataclass
 class CriticUpdateAux:

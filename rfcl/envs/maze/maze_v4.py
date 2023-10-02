@@ -23,7 +23,6 @@ from os import path
 from typing import Dict, List, Optional, Union
 
 import numpy as np
-
 from gymnasium_robotics.core import GoalEnv
 from gymnasium_robotics.envs.maze.maps import COMBINED, GOAL, RESET, U_MAZE
 

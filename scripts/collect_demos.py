@@ -1,24 +1,30 @@
-import os.path as osp
 import os
+import os.path as osp
 import sys
 import warnings
-from typing import Optional, Any
-import jax
+from typing import Any, Optional
+
 import flax
+import jax
 import numpy as np
 import optax
 from omegaconf import OmegaConf
-from rfcl.utils.parse import parse_cfg
-from rfcl.utils.io_utils import merge_h5
-from rfcl.logger import LoggerConfig
-from rfcl.models import NetworkConfig, build_network_from_cfg
-from rfcl.utils.spaces import get_action_dim
+
 from rfcl.agents.sac import SAC, ActorCritic, SACConfig
 from rfcl.agents.sac.networks import DiagGaussianActor
 from rfcl.envs.make_env import EnvConfig, make_env_from_cfg
+from rfcl.logger import LoggerConfig
+from rfcl.models import NetworkConfig, build_network_from_cfg
+from rfcl.utils.io_utils import merge_h5
+from rfcl.utils.parse import parse_cfg
+from rfcl.utils.spaces import get_action_dim
+
+
 warnings.simplefilter(action="ignore", category=FutureWarning)
-from rfcl.data.dataset import ReplayDataset, get_states_dataset
 from dataclasses import dataclass
+
+from rfcl.data.dataset import ReplayDataset, get_states_dataset
+
 
 @dataclass
 class TrainConfig:

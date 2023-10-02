@@ -59,6 +59,7 @@ def write_txt(filename: Union[str, Path], content: Union[str, Sequence[str]]):
 
 import h5py
 
+
 def merge_h5(output_path: str, traj_paths, recompute_id=True):
     print("Merge to", output_path)
 

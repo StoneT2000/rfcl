@@ -1,21 +1,26 @@
+import warnings
 from dataclasses import dataclass
 from functools import partial
-from typing import Dict, Optional, List, Union
-import warnings
+from typing import Dict, List, Optional, Union
+
 import gymnasium
+import numpy as np
+from chex import Array
 from gymnasium import spaces
 from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import TimeLimit
+from omegaconf import OmegaConf
 
 import rfcl.envs.make_env._gymnasium_robotics as _gymnasium_robotics
-import rfcl.envs.make_env._meta_world as _meta_world
 import rfcl.envs.make_env._mani_skill2 as _mani_skill2
+import rfcl.envs.make_env._meta_world as _meta_world
+from rfcl.envs.wrappers.common import (
+    ContinuousTaskWrapper,
+    EpisodeStatsWrapper,
+    SparseRewardWrapper,
+)
 
-from rfcl.envs.wrappers.common import EpisodeStatsWrapper, SparseRewardWrapper, ContinuousTaskWrapper
 
-from chex import Array
-from omegaconf import OmegaConf
-import numpy as np
 THIS_FILE = "rfcl/envs/make_env/make_env.py"
 @dataclass
 class EnvConfig:
@@ -118,9 +123,13 @@ def make_env(
         elif _meta_world.is_meta_world_env(env_id):
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
-                    from rfcl.envs.wrappers._meta_world import MetaWorldEnv
-                    from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_HIDDEN, ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
                     from gymnasium.envs.registration import EnvSpec
+                    from metaworld.envs import (
+                        ALL_V2_ENVIRONMENTS_GOAL_HIDDEN,
+                        ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE,
+                    )
+
+                    from rfcl.envs.wrappers._meta_world import MetaWorldEnv
 
                     env = MetaWorldEnv(env_id, **env_kwargs)
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)

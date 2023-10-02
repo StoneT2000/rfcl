@@ -4,9 +4,11 @@ Configs can be a bit complicated, we recommend directly looking at configs/ms2/b
 Alternatively, go to the file defining each of the nested configurations and see the comments.
 """
 import copy
-import warnings
-import os.path as osp
 import os
+import os.path as osp
+import warnings
+
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 import sys
@@ -17,22 +19,19 @@ import gymnasium as gym
 import jax
 import numpy as np
 import optax
-from rfcl.utils.parse import parse_cfg
 from omegaconf import OmegaConf
 
 from rfcl.agents.sac import SAC, ActorCritic, SACConfig
 from rfcl.agents.sac.networks import DiagGaussianActor
 from rfcl.data.dataset import ReplayDataset, get_states_dataset
-from rfcl.envs.make_env import (
-    EnvConfig,
-    get_initial_state_wrapper,
-    make_env_from_cfg,
-)
+from rfcl.envs.make_env import EnvConfig, get_initial_state_wrapper, make_env_from_cfg
 from rfcl.envs.wrappers.curriculum import ReverseCurriculumWrapper
 from rfcl.envs.wrappers.forward_curriculum import SeedBasedForwardCurriculumWrapper
 from rfcl.logger import LoggerConfig
 from rfcl.models import NetworkConfig, build_network_from_cfg
+from rfcl.utils.parse import parse_cfg
 from rfcl.utils.spaces import get_action_dim
+
 
 @dataclass
 class TrainConfig:

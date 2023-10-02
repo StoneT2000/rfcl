@@ -14,6 +14,7 @@ import numpy as np
 from chex import Array, PRNGKey
 from flax import struct
 from tqdm import tqdm
+
 from rfcl.utils import tools
 
 

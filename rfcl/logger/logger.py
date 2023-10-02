@@ -9,6 +9,7 @@ from typing import Callable, Dict, Union
 import numpy as np
 from omegaconf import OmegaConf
 
+
 color2num = dict(
     gray=30,
     red=31,

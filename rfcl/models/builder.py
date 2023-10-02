@@ -10,6 +10,7 @@ from dacite import from_dict
 from .mlp import MLP, MLPConfig
 from .types import NetworkConfig
 
+
 ACTIVATIONS = dict(relu=nn.relu, gelu=nn.gelu, tanh=nn.tanh, sigmoid=nn.sigmoid, log_softmax=nn.log_softmax)
 
 

@@ -7,8 +7,9 @@ from collections import defaultdict
 from typing import Callable
 
 import h5py
-import numpy as np
 import jax
+import numpy as np
+
 
 def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1, shuffle: bool = False):
     states_dataset = defaultdict(dict)

@@ -11,6 +11,7 @@ import optax
 from chex import PRNGKey
 from flax import struct
 
+
 Params = flax.core.FrozenDict[str, Any]
 # T = TypeVar("T", bound=nn.Module)
 

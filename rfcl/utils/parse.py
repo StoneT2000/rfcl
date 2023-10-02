@@ -1,8 +1,10 @@
 """
 parser code for parsing configuration files
 """
-from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
+
+from omegaconf import DictConfig, OmegaConf
+
 
 def parse_cfg(cfg_path: str = None, default_cfg_path: str = None) -> OmegaConf:
     """Parses a config file and returns an OmegaConf object. Priority is CLI configs,

@@ -12,16 +12,17 @@ import jax.numpy as jnp
 import numpy as np
 from chex import PRNGKey
 from flax import struct
+from tqdm import tqdm
+
 from rfcl.agents.base import BasePolicy
+from rfcl.agents.sac import loss
+from rfcl.agents.sac.config import SACConfig, TimeStep
+from rfcl.agents.sac.networks import ActorCritic, DiagGaussianActor
 from rfcl.data.buffer import GenericBuffer
 from rfcl.data.loop import DefaultTimeStep, EnvLoopState
 from rfcl.logger import LoggerConfig
 from rfcl.utils import tools
-from tqdm import tqdm
 
-from rfcl.agents.sac import loss
-from rfcl.agents.sac.config import SACConfig, TimeStep
-from rfcl.agents.sac.networks import ActorCritic, DiagGaussianActor
 
 @struct.dataclass
 class TrainStepMetrics:

@@ -1,11 +1,14 @@
+from typing import Dict, Optional
+
 import gymnasium as gym
-from gymnasium.core import Env
 import matplotlib.pyplot as plt
-from gymnasium import spaces
-from gymnasium import ObservationWrapper
 import numpy as np
+from gymnasium import ObservationWrapper, spaces
+from gymnasium.core import Env
+
 from .point_maze import PointMazeEnv
-from typing import Optional, Dict
+
+
 G = "g"
 R = "r"
 C = "c"

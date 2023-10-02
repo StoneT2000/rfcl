@@ -3,6 +3,7 @@ import chex
 import distrax
 import flax.linen as nn
 
+
 Array = chex.Array
 Scalar = chex.Scalar
 

@@ -1,9 +1,11 @@
 from collections import deque
 from dataclasses import dataclass
+
+import jax
 import numpy as np
 from gymnasium.vector import VectorEnvWrapper
 from gymnasium.vector.vector_env import VectorEnv
-import jax
+
 
 def create_filled_deque(maxlen, fill_value):
     return deque([fill_value] * maxlen, maxlen=maxlen)
@@ -15,6 +17,8 @@ class SeedMetadata:
     successes: deque
 
 import itertools
+
+
 def success_once_score(seed_metadata: SeedMetadata):
     returns = seed_metadata.returns
     size = 5

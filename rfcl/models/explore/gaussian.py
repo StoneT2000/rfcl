@@ -4,6 +4,7 @@ import distrax
 import flax.linen as nn
 import jax.numpy as jnp
 
+
 Array = chex.Array
 Scalar = chex.Scalar
 

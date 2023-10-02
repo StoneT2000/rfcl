@@ -1,8 +1,12 @@
 import gymnasium as gym
-
-from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_HIDDEN, ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
+from metaworld.envs import (
+    ALL_V2_ENVIRONMENTS_GOAL_HIDDEN,
+    ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE,
+)
 from shimmy.openai_gym_compatibility import _convert_space
+
 from rfcl.envs.wrappers.curriculum import InitialStateWrapper
+
 
 class MetaWorldEnv(gym.Env):
     """

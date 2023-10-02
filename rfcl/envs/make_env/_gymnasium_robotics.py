@@ -1,6 +1,7 @@
 import gymnasium
 from gymnasium.wrappers import RecordVideo
 
+
 def is_gymnasium_robotics_env(env_id: str):
     try:
         import gymnasium_robotics
