@@ -11,5 +11,5 @@ do
         logger.wandb=True \
         train.num_demos=${demos} \
         seed=${seed} \
-        train.steps=2000000
+        train.steps=4000000
 done
