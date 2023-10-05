@@ -43,12 +43,8 @@ class EnvMeta:
     env_suite: str
 
 
-def wrap_mujoco_env(env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()):
+def wrap_env(env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()):
     from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
-
-    env = ContinuousTaskWrapper(env)
-    env = SparseRewardWrapper(env)
-    env = EpisodeStatsWrapper(env)
     for wrapper in wrappers:
         env = wrapper(env)
     if record_video_path is not None and (not record_episode_kwargs["record_single"] or idx == 0):
@@ -107,31 +103,23 @@ def make_env(
             env_action_scale = action_scale
         rescale_action_wrapper = lambda x: gymnasium.wrappers.RescaleAction(x, -env_action_scale, env_action_scale)
         clip_wrapper = lambda x: gymnasium.wrappers.ClipAction(x)
-
-        reward_type = "dense"
-        if "reward_type" in env_kwargs:
-            reward_type = env_kwargs["reward_type"]
-            if "binary" in reward_type:
-                env_kwargs["reward_type"] = "sparse"
+        wrappers = [ContinuousTaskWrapper, SparseRewardWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
 
         if _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
-            wrappers = [ContinuousTaskWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
+            
             context = "forkserver"  # currently ms2 does not work with fork
         elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
             from rfcl.envs.maze.test_maze import PointMazeTestEnv
-
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
-                    return wrap_mujoco_env(
+                    return wrap_env(
                         env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
-
                 return _init
 
         elif _meta_world.is_meta_world_env(env_id):
-
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     from gymnasium.envs.registration import EnvSpec
@@ -139,17 +127,13 @@ def make_env(
                         ALL_V2_ENVIRONMENTS_GOAL_HIDDEN,
                         ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE,
                     )
-
                     from rfcl.envs.wrappers._meta_world import MetaWorldEnv
-
                     env = MetaWorldEnv(env_id, **env_kwargs)
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)
-                    return wrap_mujoco_env(
+                    return wrap_env(
                         env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
                     )
-
                 return _init
-
         else:
             raise NotImplementedError()
 
@@ -201,7 +185,7 @@ def get_env_suite(env_id):
         return "meta_world"
     else:
         warnings.warn(
-            f"Unknown environment suite for env {env_id}. You can safely ignore this. If this is a new environment we recommend updating {THIS_FILE} file with the right details."
+            f"Unknown environment suite for env {env_id}. You can safely ignore this. If this is a new environment we recommend updating the get_env_suite function in {THIS_FILE} file with the right details."
         )
         return "unknown"
 
@@ -224,4 +208,4 @@ def get_initial_state_wrapper(env_id):
 
         return MetaWorldInitialStateWrapper
     else:
-        raise NotImplementedError(f"Need to add the initial state wrapper for {env_id}")
+        raise NotImplementedError(f"Need to add the initial state wrapper for {env_id}. Add it to rfcl/envs/wrappers/_<env_suite_name>.py and import it and return it here")

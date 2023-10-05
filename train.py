@@ -66,6 +66,8 @@ class TrainConfig:
     load_as_offline_buffer: bool
     load_as_online_buffer: bool
 
+    # other
+    use_orig_env_for_eval: bool = True
 
 @dataclass
 class SACNetworkConfig:
@@ -157,7 +159,7 @@ def main(cfg: SACExperiment):
     ]
     env, env_meta = make_env_from_cfg(env_cfg, seed=cfg.seed, wrappers=wrappers)
     eval_env = None
-    use_orig_env_for_eval = True
+    use_orig_env_for_eval = cfg.train.use_orig_env_for_eval
     if cfg.sac.num_eval_envs > 0:
         eval_wrappers = []
         if not use_orig_env_for_eval:

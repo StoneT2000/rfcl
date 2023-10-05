@@ -23,7 +23,7 @@ Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from 
 - [Testing on New Environments](#testing-on-new-environments)
 
 <!-- todo anon: add in real names and links. Remove openreview -->
-## Setup
+## Setup ⚙️
 
 We recommend using conda (or the faster mamba), and installing from source as so
 ```
@@ -50,20 +50,21 @@ pip install shimmy[gym-v21]
 
 We further provide [docker images](./docker) for each environment suite benchmarked for ease of use and deployment with all dependencies installed.
 
-## Data / Demonstrations
+## Data / Demonstrations 📊
 
 We benchmark on 3 environment suites, each with their own demonstrations. We have uploaded all demonstrations to [google drive](). We recommend you directly download these demonstrations to a `demos/` folder as opposed to trying to format them to include environment states as the code for that is quite complicated.
 <!-- todo anon: use HF  -->
 
 If you are interested in how the demonstrations are formatted, you can take a look at `scripts/demos/<env_suite>/format_dataset.py`. We take existing demonstrations from the environment suites and format them into the flexible [ManiSkill2 demonstration format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format), which is used as this format supports storing environment states out of the box which is needed by RFCL. Some environment demonstrations (e.g. Adroit human demonstrations) do not come with environment states, so we wrote some fairly complex code to extract them.
 
-## Training
+## Training 🧠
 
 To train, run any one of the scripts for each environment suite under `scripts/<env_suite>` (ManiSkill2: ms2, Adroit: adroit, Metaworld: metaworld). 
 
 An example for training RFCL on ManiSkill2 (with the wall-time efficient hyperparameters) would be
 
 ```bash
+seed=10
 demos=5
 env="peginsertion" # can be pickcube, stackcube, peginsertion, plugcharger
 XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py configs/ms2/sac_ms2_${env}.yml \
@@ -77,6 +78,7 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py configs/ms2/sac_ms2_${env}.y
 And for sample-efficient hyperparameters (higher update to data ratio) you would use the _sample_efficient.yml file instead
 
 ```bash
+seed=10
 demos=5
 env="peginsertion" # can be pickcube, stackcube, peginsertion, plugcharger
 XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py configs/ms2/sac_ms2_${env}_sample_efficient.yml \
@@ -91,7 +93,9 @@ These will run and save experiment logs to the `exps/<logger.exp_name>` folder, 
 
 See `configs/<env_suite>` for all configurations if you want to understand the exact configurations used (e.g. SAC + Q-Ensemble configs, environment configs etc.)
 
-### Tuning tips for RFCL
+To visually see how the reverse curriculum is progressing through evaluation videos, pass in the argument `train.eval_use_orig_env=False`, which will then wrap the evaluation environment with the reverse curriculum wrapper and sync with the training environment's reverse curriculum. Videos here are saved to `exps<logger.exp_name>/stage_1_videos`. By default this is `True` so evaluation/test results reported to tensorboard/wandb are always the results from evaluating on the task's original initial state distribution.
+
+### Tuning tips for RFCL 🔧
 
 There are a few very important hyperparameters to tune if you want better performance / something is not working.
 
@@ -117,7 +121,7 @@ We also highly recommend tracking training via tensorboard or weights and biases
 
 For starters, it is the **most demonstration and sample efficient** model-free method at the moment to solve the benchmarked simulated tasks: Adroit, MetaWorld, and ManiSkill2 (MS2). It is also the first (and currently the only) method (model-free or model-based) to solve PegInsertionSide and PlugCharger, two highly randomized and highly precise tasks, from sparse rewards with 10 demonstrations or less as far as we know. See [this](https://reverseforward-cl.github.io/#task-visuals-a) for visualization of those two tasks.
 
-In terms of sample-efficiency, [Modem (TD-MPC + demonstrations)](https://nicklashansen.github.io/modemrl/) may be the most sample-efficient as they leverages world models, although the wall-time for in-simulation training is difficult to compare as it is down to implementation so it is unfair to compare "world models + planning + high sample efficiency" vs "model-free w/ no world models or planning + lower sample efficiency" on the dimension of wall-time.
+In terms of sample-efficiency, [Modem (TD-MPC + demonstrations)](https://nicklashansen.github.io/modemrl/) may be the most sample-efficient as they leverage world models, although the wall-time for in-simulation training is difficult to compare as it is down to implementation and it is unfair to compare "world models + planning + high sample efficiency" vs "model-free w/ no world models or planning + lower sample efficiency" on the dimension of wall-time.
 
 Regardless, RFCL is still the fastest method to solve the hardest tasks, which are all tasks in ManiSkill2. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, Adroit Door can be solved in < 5 minutes, MS2 PickCube in < 10 minutes, MS2 PegInsertionSide in < 60 minutes, which are the fastest to date. For a table of wall-times, see this TODO.
 
@@ -126,15 +130,84 @@ Regardless, RFCL is still the fastest method to solve the hardest tasks, which a
 
 It is well known most behavior cloning type methods often have difficulty when given suboptimal, multi-modal data, which is the case with human demonstrations in the Adroit environments and the motion planned demonstrations in the ManiSkill2 demonstrations. Standard behavior cloning using all 1000 ManiSkill2 demonstrations has difficulty getting any success on PegInsertionSide and PlugCharger. However, using RFCL to learn from just 10 demonstrations, we can produce a policy capable of solving both tasks, and then generate 1000s more demonstrations from a neural network policy. In our experiments, after generating 5000 demonstrations from the policies trained via RFCL and 10 motion planned demonstrations, behavior cloning is capable of achieving ~100% success on PegInsertionSide and PlugCharger.
 
-This could pave way for a scalable solution to generate usable demonstrations for a diverse set of environments and using behavior cloning type methods to more easily learn e.g. multi-task models, large foundation models etc. To make this easy, we provide a simple script to rollout a RFCL trained policy across multiple workers to collect many demonstrations.
+This could pave way for a scalable solution to generate usable demonstrations for a diverse set of environments and using behavior cloning type methods to more easily learn e.g. multi-task models, large foundation models etc. To make this easy, we provide a simple script to rollout a RFCL trained policy across multiple workers to collect many demonstrations (and report success rate for easy evaluation)
 
 ```bash
 XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/collect_demos.py exps/path/to/model.jx \
     num_envs=8 num_episodes=1000
 ```
 
-## Testing on New Environments
+## Testing on New Environments 🌏 / Customization 🎨
 
-To test on your own custom environments or tasks from another suite (e.g. [RoboMimic](https://robomimic.github.io/)), all you need to do is create an `InitialStateWrapper` TODO. We only benchmark on 22 environments in this work, but an example of how to add RoboMimic is detailed in this tutorial TODO LINK
+### Adding a new Environment
+To test on your own custom environments/tasks, all you need to do is create an `InitialStateWrapper` and write the code to make your environment based on environment ID. The assumption here is that the environment has state reset capabilities (which is the case for all major robotics simulations e.g. ManiSkill2, Mujoco, Isaac). Moreover, we assume access to usable (optimal or suboptimal) demonstration data. Usable here means if we set the environment to the same initial state as the demonstration and replay all actions, we can still get success most of the time. Some simulators/tasks have simulation issues where this is not possible.
 
-<!-- todo anon: acknowledgements -->
+To add your own environment, we recommend first to git clone this repository and edit `rfcls/envs/make_env/make_env.py` and add a branch
+
+```python
+elif is_my_env(env_id):
+    # import what you need
+    # define a env_factory function which creates the environment like below
+    def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
+        def _init():
+            env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs) # or use your own env creation method
+            return wrap_env(
+                env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
+            )
+        return _init
+```
+
+The wrappers will by default be populated by wrappers that turn the modify the environment to be continuous (terminated always False, truncated True when timelimit is reached), use sparse rewards only (+1 when info['success'] is True, +0 otherwise). The wrappers and any video recording wrappers are applied via the `wrap_env` function. The code expects all environments to store the success condition of the environment in `info['success']` which is returned after calls to `env.step`. Moreover, we expect code to follow the standard [Gymnasium API](https://gymnasium.farama.org/api/env/).
+
+After this, we need to define an `InitialStateWrapper`, which can be done as so
+
+```python
+from rfcl.envs.wrappers.curriculum import InitialStateWrapper
+class YourInitialStateWrapper(InitialStateWrapper):
+    def set_env_state(self, state):
+        # use your env's method to set the environmnet state. This should be able to set state from states that can be retrieved from the environment
+        return self.env.unwrapped.set_state(state)
+
+    def get_env_obs(self):
+        # return the current environment observation.
+        return self.env.unwrapped.get_obs()
+```
+
+Once defined, simply return this wrapper class in the function [`get_initial_state_wrapper` in `rfcls/envs/make_env/make_env.py`](./rfcl/envs/make_env/make_env.py). 
+
+### Adding Demonstration Data
+
+The code here uses the [ManiSkill2 demonstration data format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format). If your demonstration data isn't in this format, the easiest way to generate it is to use the RecordEpisodeWrapper as so
+
+```python
+env = make_your_env(env_id)
+env = RecordEpisodeWrapper(env, save_trajectory=True, save_video=False, trajectory_name="demos/trajectory")
+for demo in your_demonstration_data
+    env.reset()
+    env.set_state(demo["initial_env_state"]) # add code here to set the initial state to the same one in the demonstration
+    for i in range(len(demo["actions"])):
+        env.step(demo["actions"][i])
+env.close()
+```
+
+The RecordEpsiodeWrapper assumes upon creating your environment you expose the function `env.get_env_state` which should return the current environment state as a dictionary or a flat vector. This will save the demonstration data to `demos/trajectory.h5` and necessary metadata to `demos/trajectory.json`. 
+
+Note that the code provided above is simplified, depending on your code setup, some parts e.g. setting the first initial state may not be as simple. For example, the original Adroit human demonstrations did not have initial environment states, so we had to reverse engineer them to figure out what they were.
+
+
+### Training on New Environment and Data
+
+To train on your new environment, simply copy the base configuration in `configs/ms2/base_sac_ms2.yml` and modify any environment kwargs you need under `env.env_kwargs` in the yml file. These are passed to both the training and evaluation environment. Suppose your new configuration is named `myconfig.yml`, you can run training easily as so by additionally specifycing the env id and demonstration dataset path:
+
+```bash
+seed=10
+demos=5
+XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py myconfig.yml \
+    logger.exp_name="my_exp_${demos}_demos_s${seed}" \
+    logger.wandb=True \
+    train.num_demos=${demos} \
+    seed=${seed} \
+    train.steps=2000000 \
+    env.env_id="my_env_id" \
+    train.dataset_path="demos/trajectory.h5"
+```
