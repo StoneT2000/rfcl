@@ -45,6 +45,7 @@ class EnvMeta:
 
 def wrap_env(env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()):
     from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
+
     for wrapper in wrappers:
         env = wrapper(env)
     if record_video_path is not None and (not record_episode_kwargs["record_single"] or idx == 0):
@@ -107,19 +108,20 @@ def make_env(
 
         if _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
-            
+
             context = "forkserver"  # currently ms2 does not work with fork
         elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
             from rfcl.envs.maze.test_maze import PointMazeTestEnv
+
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
-                    return wrap_env(
-                        env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
-                    )
+                    return wrap_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
+
                 return _init
 
         elif _meta_world.is_meta_world_env(env_id):
+
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     from gymnasium.envs.registration import EnvSpec
@@ -127,13 +129,15 @@ def make_env(
                         ALL_V2_ENVIRONMENTS_GOAL_HIDDEN,
                         ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE,
                     )
+
                     from rfcl.envs.wrappers._meta_world import MetaWorldEnv
+
                     env = MetaWorldEnv(env_id, **env_kwargs)
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)
-                    return wrap_env(
-                        env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs
-                    )
+                    return wrap_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
+
                 return _init
+
         else:
             raise NotImplementedError()
 
@@ -208,4 +212,6 @@ def get_initial_state_wrapper(env_id):
 
         return MetaWorldInitialStateWrapper
     else:
-        raise NotImplementedError(f"Need to add the initial state wrapper for {env_id}. Add it to rfcl/envs/wrappers/_<env_suite_name>.py and import it and return it here")
+        raise NotImplementedError(
+            f"Need to add the initial state wrapper for {env_id}. Add it to rfcl/envs/wrappers/_<env_suite_name>.py and import it and return it here"
+        )

@@ -6,12 +6,8 @@ Alternatively, go to the file defining each of the nested configurations and see
 import copy
 import os
 import os.path as osp
-import warnings
-
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
 import sys
+import warnings
 from dataclasses import asdict, dataclass
 from typing import Optional
 
@@ -31,6 +27,9 @@ from rfcl.logger import LoggerConfig
 from rfcl.models import NetworkConfig, build_network_from_cfg
 from rfcl.utils.parse import parse_cfg
 from rfcl.utils.spaces import get_action_dim
+
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
 @dataclass
@@ -68,6 +67,7 @@ class TrainConfig:
 
     # other
     use_orig_env_for_eval: bool = True
+
 
 @dataclass
 class SACNetworkConfig:

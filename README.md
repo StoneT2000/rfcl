@@ -31,6 +31,7 @@ conda create -n "rfcl" "python==3.9"
 pip install --upgrade "jax[cuda12_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 pip install -e .
 ```
+<!-- todo anon: add git clone this repo above -->
 
 You may need to use `pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html` if cuda 12 is not available.
 
@@ -52,10 +53,10 @@ We further provide [docker images](./docker) for each environment suite benchmar
 
 ## Data / Demonstrations 📊
 
-We benchmark on 3 environment suites, each with their own demonstrations. We have uploaded all demonstrations to [google drive](). We recommend you directly download these demonstrations to a `demos/` folder as opposed to trying to format them to include environment states as the code for that is quite complicated.
+We benchmark on 3 environment suites, each with their own demonstrations. We have uploaded all demonstrations to [google drive](https://drive.google.com/file/d/1SYNg-VoiRalUnmc8qVTq1oOln00sbNoC/view). We recommend you directly download these demonstrations to a `demos/` folder as opposed to trying to format them to include environment states as the code for that is quite complicated.
 <!-- todo anon: use HF  -->
 
-If you are interested in how the demonstrations are formatted, you can take a look at `scripts/demos/<env_suite>/format_dataset.py`. We take existing demonstrations from the environment suites and format them into the flexible [ManiSkill2 demonstration format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format), which is used as this format supports storing environment states out of the box which is needed by RFCL. Some environment demonstrations (e.g. Adroit human demonstrations) do not come with environment states, so we wrote some fairly complex code to extract them.
+If you are interested in how the demonstrations are formatted, you can take a look at `scripts/demos/<env_suite>/format_dataset.py`. We take existing demonstrations from the environment suites and format them into the flexible [ManiSkill2 demonstration format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format), which is used as this format supports storing environment states out of the box which is needed by RFCL.
 
 ## Training 🧠
 
@@ -142,7 +143,7 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/collect_demos.py exps/path/to
 ### Adding a new Environment
 To test on your own custom environments/tasks, all you need to do is create an `InitialStateWrapper` and write the code to make your environment based on environment ID. The assumption here is that the environment has state reset capabilities (which is the case for all major robotics simulations e.g. ManiSkill2, Mujoco, Isaac). Moreover, we assume access to usable (optimal or suboptimal) demonstration data. Usable here means if we set the environment to the same initial state as the demonstration and replay all actions, we can still get success most of the time. Some simulators/tasks have simulation issues where this is not possible.
 
-To add your own environment, we recommend first to git clone this repository and edit `rfcls/envs/make_env/make_env.py` and add a branch
+To add your own environment, we recommend first to git clone this repository and edit [`rfcls/envs/make_env/make_env.py`](rfcls/envs/make_env/make_env.py) and add a branch
 
 ```python
 elif is_my_env(env_id):
@@ -173,7 +174,7 @@ class YourInitialStateWrapper(InitialStateWrapper):
         return self.env.unwrapped.get_obs()
 ```
 
-Once defined, simply return this wrapper class in the function [`get_initial_state_wrapper` in `rfcls/envs/make_env/make_env.py`](./rfcl/envs/make_env/make_env.py). 
+Once defined, simply return this wrapper class in the function [`get_initial_state_wrapper` in `rfcls/envs/make_env/make_env.py`](./rfcl/envs/make_env/make_env.py#L186). 
 
 ### Adding Demonstration Data
 
@@ -197,7 +198,7 @@ Note that the code provided above is simplified, depending on your code setup, s
 
 ### Training on New Environment and Data
 
-To train on your new environment, simply copy the base configuration in `configs/ms2/base_sac_ms2.yml` and modify any environment kwargs you need under `env.env_kwargs` in the yml file. These are passed to both the training and evaluation environment. Suppose your new configuration is named `myconfig.yml`, you can run training easily as so by additionally specifycing the env id and demonstration dataset path:
+To train on your new environment, simply copy the base configuration in [`configs/ms2/base_sac_ms2.yml`](configs/ms2/base_sac_ms2.yml) and modify any environment kwargs you need under `env.env_kwargs` in the yml file. These are passed to both the training and evaluation environment. Suppose your new configuration is named `myconfig.yml`, you can run training easily as so by additionally specifycing the env id and demonstration dataset path:
 
 ```bash
 seed=10
