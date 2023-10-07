@@ -5,6 +5,7 @@ from typing import Callable, List, Optional, Sequence, Union
 
 import flax.linen as nn
 import jax.numpy as jnp
+import numpy as np
 
 from .types import NetworkConfig
 
@@ -23,7 +24,7 @@ class MLPConfig(NetworkConfig):
     arch_cfg: MLPArchConfig
 
 
-def default_init(scale: Optional[float] = jnp.sqrt(2)):
+def default_init(scale: Optional[float] = np.sqrt(2)):
     return nn.initializers.orthogonal(scale)
 
 
@@ -41,7 +42,7 @@ class MLP(nn.Module):
     features: Sequence[int]
     activation: Callable[[jnp.ndarray], jnp.ndarray] = nn.relu
     output_activation: Callable[[jnp.ndarray], jnp.ndarray] = None
-    final_ortho_scale: float = jnp.sqrt(2)
+    final_ortho_scale: float = np.sqrt(2)
     use_layer_norm: bool = False
 
     @nn.compact

@@ -5,7 +5,7 @@ import os
 from functools import partial
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Type
-
+import numpy as np
 import flax
 import flax.linen as nn
 import jax
@@ -51,7 +51,7 @@ class Critic(nn.Module):
         return jnp.squeeze(value, -1)
 
 
-def default_init(scale: Optional[float] = jnp.sqrt(2)):
+def default_init(scale: Optional[float] = np.sqrt(2)):
     return nn.initializers.orthogonal(scale)
 
 
