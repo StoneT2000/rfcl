@@ -114,11 +114,13 @@ def main(cfg: SACExperiment):
     exp_path = osp.join(cfg.logger.workspace, orig_exp_name)
     if osp.exists(exp_path):
         i = 1
+        prev_exp_path = exp_path
         while osp.exists(exp_path):
+            prev_exp_path = exp_path
             cfg.logger.exp_name = f"{orig_exp_name}_{i}"
             exp_path = osp.join(cfg.logger.workspace, cfg.logger.exp_name)
             i += 1
-        warnings.warn(f"{exp_path} already exists. Changing exp_name to {cfg.logger.exp_name}")
+        warnings.warn(f"{prev_exp_path} already exists. Changing exp_name to {cfg.logger.exp_name}")
     video_path = osp.join(cfg.logger.workspace, cfg.logger.exp_name, "stage_1_videos")
 
     cfg.sac.num_envs = cfg.env.num_envs

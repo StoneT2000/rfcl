@@ -122,7 +122,7 @@ class InitialStateWrapper(gymnasium.Wrapper):
         demo_id = self._state_rng.choice(self.demo_ids, p=self.demo_id_density)
 
         state_info = self.states_dataset[demo_id]
-        obs, info = self.env.reset(**state_info["reset_kwargs"])
+        obs, info = self.env.reset(**copy.deepcopy(state_info["reset_kwargs"]))
         self.demo_states = state_info["state"]
 
         # sample a start step
