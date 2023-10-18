@@ -65,8 +65,9 @@ class TrainConfig:
     load_as_offline_buffer: bool
     load_as_online_buffer: bool
 
-    # other
+    # other configs that are generally used for experimentation
     use_orig_env_for_eval: bool = True
+    eval_start_of_demos: bool = False
 
 
 @dataclass
@@ -178,6 +179,7 @@ def main(cfg: SACExperiment):
         eval_env = ReverseCurriculumWrapper(
             eval_env,
             eval_mode=True,
+            eval_start_of_demos=cfg.train.eval_start_of_demos,
             states_dataset=states_dataset,
             reverse_step_size=cfg.train.reverse_step_size,
             curriculum_method=cfg.train.curriculum_method,

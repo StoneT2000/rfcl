@@ -42,6 +42,9 @@ class EpisodeMetadata:
 class InitialStateWrapper(gymnasium.Wrapper):
     """
     Wrapper that allows to keep a dataset of demonstrations with states and initialize to some time t in those demonstrations
+
+    By default, if set_demo_start_steps is not called to set the distribution for sampling start steps for each demo, the wrapper uniformally
+    samples a demo and then samples the first step t_i = 0
     """
 
     def __init__(
@@ -210,13 +213,17 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         start_step_sampler: str = "geometric",
         link_envs: List["ReverseCurriculumWrapper"] = [],
         eval_mode: bool = False,
+        eval_start_of_demos: bool = False, # note only really used to compare reverse curriculum speeds for paper
         verbose=0,
     ):
         super().__init__(env)
+        if eval_start_of_demos:
+            assert eval_mode
 
         self.link_envs = link_envs
         self.verbose = verbose
         self.eval_mode = eval_mode
+        self.eval_start_of_demos = eval_start_of_demos
         self.states_dataset = states_dataset
         self.reverse_step_size = reverse_step_size
         self.per_demo_buffer_size = per_demo_buffer_size
@@ -225,7 +232,11 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
 
         self.demo_metadata = defaultdict(DemoCurriculumMetadata)
         for demo_id in states_dataset:
-            self.demo_metadata[demo_id].start_step = max(len(self.states_dataset[demo_id]["state"]) - 1, 0)
+            if eval_start_of_demos:
+                start_step = 0
+            else:
+                start_step = max(len(self.states_dataset[demo_id]["state"]) - 1, 0)
+            self.demo_metadata[demo_id].start_step = start_step
             self.demo_metadata[demo_id].total_steps = len(self.states_dataset[demo_id]["state"])
             self.demo_metadata[demo_id].success_rate_buffer = create_filled_deque(per_demo_buffer_size, 0)
             self.demo_metadata[demo_id].episode_steps_back = create_filled_deque(per_demo_buffer_size, -1)
@@ -234,17 +245,16 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
         assert self.curriculum_method in ["global", "per_demo"]
 
         self.start_step_sampler = start_step_sampler
-        assert self.start_step_sampler in ["fixed_point", "geometric"]
+        assert self.start_step_sampler in ["fixed_point", "uniform", "geometric", "uniform_step", "uniform_spike"]
 
         self.sync_envs()
-
-        self.reset_to_states_enabled = True
 
     def sync_envs(self):
         """
         Sync the demo metadata for initial start state wrappers.
         Call this whenever self.demo_metadata changes
         """
+        if self.eval_start_of_demos: return
         if self.verbose > 0:
             print("Syncing Metadata")
         t_is = {}
@@ -262,36 +272,71 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
                 start_steps[x] = np.array(x_start_steps_list)
                 start_steps_densities[x] = np.array(x_start_steps_density_list)
         elif self.start_step_sampler == "fixed_point":
+            # sample 100% at t_i
             start_steps = {x: np.array([self.demo_metadata[x].start_step]) for x in self.demo_metadata}
             start_steps_densities = {x: np.array([1]) for x in self.demo_metadata}
-
+        elif self.start_step_sampler == "uniform":
+            start_steps = {}
+            start_steps_densities = {}
+            for x in self.demo_metadata:
+                metadata = self.demo_metadata[x]
+                start_steps[x] = np.arange(0, metadata.total_steps)
+                start_steps_densities[x] = np.ones_like(start_steps[x]) / len(start_steps[x])
+        elif self.start_step_sampler == "uniform_spike":
+            # 50% sample at t_i, 50% elsewhere
+            start_steps = {}
+            start_steps_densities = {}
+            for x in self.demo_metadata:
+                metadata = self.demo_metadata[x]
+                x_start_steps_list = np.arange(0, metadata.total_steps)
+                x_start_steps_density_list = np.ones_like(x_start_steps_list)
+                if len(x_start_steps_list) > 1:
+                    x_start_steps_density_list *= 1 / (len(x_start_steps_list) - 1)
+                x_start_steps_density_list[metadata.start_step] = 1
+                x_start_steps_density_list = x_start_steps_density_list / x_start_steps_density_list.sum()
+                start_steps[x] = np.array(x_start_steps_list)
+                start_steps_densities[x] = np.array(x_start_steps_density_list)
+        elif self.start_step_sampler == "uniform_step":
+            # 50% sample at t_i, 50% sample at < t_i
+            start_steps = {}
+            start_steps_densities = {}
+            for x in self.demo_metadata:
+                metadata = self.demo_metadata[x]
+                x_start_steps_list = np.arange(0, metadata.start_step + 1)
+                x_start_steps_density_list = np.ones_like(x_start_steps_list)
+                if len(x_start_steps_list) > 1:
+                    x_start_steps_density_list *= 1 / (len(x_start_steps_list) - 1)
+                x_start_steps_density_list[metadata.start_step] = 1
+                x_start_steps_density_list = x_start_steps_density_list / x_start_steps_density_list.sum()
+                start_steps[x] = np.array(x_start_steps_list)
+                start_steps_densities[x] = np.array(x_start_steps_density_list)
         self.env.unwrapped.call("set_demo_start_steps", t_is, start_steps, start_steps_densities)  # sync curriculum settings
 
         # sync metadata and configs across linked reverse curriculum wrapper envs
         for link_env in self.link_envs:
-            link_env.demo_metadata = copy.deepcopy(self.demo_metadata)
-            link_env.reverse_step_size = self.reverse_step_size
-            link_env.global_success_rate_history = create_filled_deque(self.per_demo_buffer_size * len(self.states_dataset), 0)
-            link_env.sync_envs()
+            if not link_env.eval_start_of_demos:
+                link_env.demo_metadata = copy.deepcopy(self.demo_metadata)
+                link_env.reverse_step_size = self.reverse_step_size
+                link_env.global_success_rate_history = create_filled_deque(self.per_demo_buffer_size * len(self.states_dataset), 0)
+                link_env.sync_envs()
 
     def step_wait(self):
         observation, reward, terminated, truncated, info = super().step_wait()
-        if self.reset_to_states_enabled:
-            if terminated.any() or truncated.any():
-                for final_info, exists in zip(info["final_info"], info["_final_info"]):
-                    if not exists:
-                        continue
-                    demo_id = final_info["demo_id"]
-                    success = final_info["success"]
-                    metadata = self.demo_metadata[demo_id]
+        if terminated.any() or truncated.any():
+            for final_info, exists in zip(info["final_info"], info["_final_info"]):
+                if not exists:
+                    continue
+                demo_id = final_info["demo_id"]
+                success = final_info["success"]
+                metadata = self.demo_metadata[demo_id]
 
-                    # record successes only when steps back is equal to the current frontier / start step t_i assigned to demo tau_i
-                    if final_info["steps_back"] == metadata.total_steps - metadata.start_step:
-                        metadata.success_rate_buffer.append(int(success))
-                        metadata.episode_steps_back.append(final_info["steps_back"])
-                        self.global_success_rate_history.append(int(success))
-                if not self.eval_mode:
-                    self.step_curriculum()
+                # record successes only when steps back is equal to the current frontier / start step t_i assigned to demo tau_i
+                if final_info["steps_back"] == metadata.total_steps - metadata.start_step:
+                    metadata.success_rate_buffer.append(int(success))
+                    metadata.episode_steps_back.append(final_info["steps_back"])
+                    self.global_success_rate_history.append(int(success))
+            if not self.eval_mode:
+                self.step_curriculum()
         return observation, reward, terminated, truncated, info
 
     def step_curriculum(self):
