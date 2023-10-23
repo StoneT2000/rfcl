@@ -291,7 +291,7 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
                 x_start_steps_list = np.arange(0, metadata.total_steps)
                 x_start_steps_density_list = np.ones_like(x_start_steps_list)
                 if len(x_start_steps_list) > 1:
-                    x_start_steps_density_list *= 1 / (len(x_start_steps_list) - 1)
+                    x_start_steps_density_list = x_start_steps_density_list * 1 / (len(x_start_steps_list) - 1)
                 x_start_steps_density_list[metadata.start_step] = 1
                 x_start_steps_density_list = x_start_steps_density_list / x_start_steps_density_list.sum()
                 start_steps[x] = np.array(x_start_steps_list)
@@ -305,7 +305,7 @@ class ReverseCurriculumWrapper(VectorEnvWrapper):
                 x_start_steps_list = np.arange(0, metadata.start_step + 1)
                 x_start_steps_density_list = np.ones_like(x_start_steps_list)
                 if len(x_start_steps_list) > 1:
-                    x_start_steps_density_list *= 1 / (len(x_start_steps_list) - 1)
+                    x_start_steps_density_list = x_start_steps_density_list * 1 / (len(x_start_steps_list) - 1)
                 x_start_steps_density_list[metadata.start_step] = 1
                 x_start_steps_density_list = x_start_steps_density_list / x_start_steps_density_list.sum()
                 start_steps[x] = np.array(x_start_steps_list)
