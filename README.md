@@ -10,7 +10,7 @@
 
 ![](./assets/figure_main.png)
 
-Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of perform well from the initial states of the given demonstrations, and then genrealize to a larger initial state distribution via a forward curriculum. Our shows a glimpse of the potential of how demonstration/sample efficient RL can be if one leverages the properties of simulation. 
+Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of perform well from the initial states of the given demonstrations, and then genrealize to a larger initial state distribution via a forward curriculum. Our shows a glimpse of the potential of how demonstration/sample efficient RL can be if one leverages the properties of simulation.
 
 **[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
 
@@ -53,10 +53,11 @@ We further provide [docker images](./docker) for each environment suite benchmar
 
 ## Data / Demonstrations 📊
 
-We benchmark on 3 environment suites, each with their own demonstrations. We have uploaded all demonstrations to [google drive](https://drive.google.com/file/d/1SYNg-VoiRalUnmc8qVTq1oOln00sbNoC/view). We recommend you directly download these demonstrations to a `demos/` folder as opposed to trying to format them to include environment states as the code for that is quite complicated.
-<!-- todo anon: use HF  -->
+<!-- https://drive.google.com/file/d/1SYNg-VoiRalUnmc8qVTq1oOln00sbNoC/view -->
 
-If you are interested in how the demonstrations are formatted, you can take a look at `scripts/demos/<env_suite>/format_dataset.py`. We take existing demonstrations from the environment suites and format them into the flexible [ManiSkill2 demonstration format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format), which is used as this format supports storing environment states out of the box which is needed by RFCL.
+We benchmark on 3 environment suites, each with their own demonstrations. We have uploaded all demonstrations with env states to [hugging face](https://huggingface.co/datasets/stonet2000/robot_demos_with_state_reset). We recommend you directly download these demonstrations to a `demos/` folder as opposed to trying to format them to include environment states as the code for that is quite complicated. Download link: https://huggingface.co/datasets/stonet2000/robot_demos_with_state_reset/blob/main/demos.zip
+
+If you are interested in how the demonstrations are formatted, you can take a look at . We take existing demonstrations from the environment suites and format them into the flexible [ManiSkill2 demonstration format](https://haosulab.github.io/ManiSkill2/concepts/demonstrations.html#format), which is used as this format supports storing environment states out of the box which is needed by RFCL.
 
 ## Training 🧠
 

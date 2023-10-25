@@ -8,7 +8,7 @@ sac:
   batch_size: 512
   replay_buffer_capacity: 2_000_000
 train:
-  dataset_path: "demos/v0/rigid_body/PlugCharger-v0/trajectory.state.pd_ee_delta_pose.h5"
+  dataset_path: "demos/mani_skill2/v0/rigid_body/PlugCharger-v0/trajectory.state.pd_ee_delta_pose.h5"
   data_action_scale: 1.25
   demo_horizon_to_max_steps_ratio: 1.25
   reverse_step_size: 2
