@@ -79,5 +79,5 @@ USER root
 RUN mkdir /work
 WORKDIR /work
 
-# commment out below if you want to use the CPU version of jax
-RUN pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+# commment out below if you want to use the CPU version of jax. Be sure you choose the version of jax that works with your CUDA and GPU
+RUN pip install "jax[cuda11_pip]==0.4.14" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
