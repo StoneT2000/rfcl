@@ -1,6 +1,7 @@
 # Reverse Forward Curriculum Learning (RFCL)
 
 **[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
+
 [Stone Tao](stoneztao.com), [Arth Shukla](https://arth.website/), [Kevin Chan](https://tsekai.com/), [Hao Su](https://cseweb.ucsd.edu/~haosu/)
 
 <p align="center">
@@ -14,8 +15,6 @@
 ![](./assets/figure_main.png)
 
 Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of performing well from the initial states of the given demonstrations, and then generalize to a larger initial state distribution via a forward curriculum. Our work shows a glimpse of the potential of how demonstration/sample efficient algorithms can be if one leverages the properties of simulation.
-
-
 
 **Table of Contents**
 - [Setup](#setup-%EF%B8%8F)
