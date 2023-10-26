@@ -1,5 +1,7 @@
 # Reverse Forward Curriculum Learning (RFCL)
 
+[Stone Tao](stoneztao.com), [Arth Shukla](), [Kevin Chan](), [Hao Su](https://cseweb.ucsd.edu/~haosu/)
+
 <p align="center">
   <img width="19.5%" src="./assets/plugcharger.gif">
   <img width="19.5%" src="./assets/peginsert.gif">
@@ -15,12 +17,12 @@ Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from 
 **[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
 
 **Table of Contents**
-- [Setup](#setup)
-- [Data/Demonstrations](#data--demonstrations)
-- [Training](#training)
-- [Tuning Tips](#tuning-tips-for-rfcl)
+- [Setup](#setup-⚙️)
+- [Data/Demonstrations](#data--demonstrations-📊)
+- [Training](#training-🧠)
+- [Tuning Tips](#tuning-tips-for-rfcl-🔧)
 - [Practicality / Use Cases](#ok-cool-what-is-rfcl-practical-for)
-- [Testing on New Environments](#testing-on-new-environments)
+- [Testing on New Environments / Customization](#testing-on-new-environments-🌏--customization-🎨)
 
 <!-- todo anon: add in real names and links. Remove openreview -->
 ## Setup ⚙️
