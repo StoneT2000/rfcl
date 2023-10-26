@@ -1,8 +1,12 @@
 # Reverse Forward Curriculum Learning (RFCL)
 
-**[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
+Official repository for the RFCL algorithm by
 
 [Stone Tao](stoneztao.com), [Arth Shukla](https://arth.website/), [Kevin Chan](https://tsekai.com/), [Hao Su](https://cseweb.ucsd.edu/~haosu/)
+
+
+**[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
+
 
 <p align="center">
   <img width="19.5%" src="./assets/plugcharger.gif">
@@ -109,6 +113,8 @@ These will run and save experiment logs to the `exps/<logger.exp_name>` folder, 
 See `configs/<env_suite>` for all configurations if you want to understand the exact configurations used (e.g. SAC + Q-Ensemble configs, environment configs etc.)
 
 To visually see how the reverse curriculum is progressing through evaluation videos, pass in the argument `train.eval_use_orig_env=False`, which will then wrap the evaluation environment with the reverse curriculum wrapper and sync with the training environment's reverse curriculum. Videos here are saved to `exps<logger.exp_name>/stage_1_videos`. By default this is `True` so evaluation/test results reported to tensorboard/wandb are always the results from evaluating on the task's original initial state distribution.
+
+All training results of RFCL from the paper are publically available on weights and biases for you to download and compare with: https://wandb.ai/stonet2000/RFCL-Sparse. See the reports section for more organized views of the results.
 
 ### Tuning tips for RFCL 🔧
 
