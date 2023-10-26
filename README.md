@@ -125,7 +125,7 @@ For starters, it is the **most demonstration and sample efficient** model-free m
 
 In terms of sample-efficiency, [Modem (TD-MPC + demonstrations)](https://nicklashansen.github.io/modemrl/) may be the most sample-efficient as they leverage world models, although the wall-time for in-simulation training is difficult to compare as it is down to implementation and it is unfair to compare "world models + planning + high sample efficiency" vs "model-free w/ no world models or planning + lower sample efficiency" on the dimension of wall-time.
 
-Regardless, RFCL is still the fastest method to solve the hardest tasks, which are all tasks in ManiSkill2. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, Adroit Door can be solved in < 5 minutes, MS2 PickCube in < 10 minutes, MS2 PegInsertionSide in < 60 minutes, which are the fastest to date. For a table of wall-times, see this TODO.
+Regardless, RFCL is still the fastest method to solve the hardest tasks. On a RTX 4090 with 8 parallel envs with just 5 demonstrations, MS2 PickCube can be solved in < 10 minutes, MS2 PegInsertionSide in < 60 minutes, which are the fastest to date.
 
 
 ### Distilling RL Generated Demonstrations from few Suboptimal Demonstrations

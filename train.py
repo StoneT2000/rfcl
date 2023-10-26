@@ -130,6 +130,7 @@ def main(cfg: SACExperiment):
     ### Create Environments ###
     if cfg.demo_seed is not None:
         np.random.seed(cfg.demo_seed)
+    
     states_dataset = get_states_dataset(cfg.train.dataset_path, num_demos=cfg.train.num_demos, shuffle=cfg.train.shuffle_demos, skip_failed=True)
 
     if "reward_mode" in cfg.env.env_kwargs:
@@ -145,7 +146,7 @@ def main(cfg: SACExperiment):
         skip_failed=False,
         num_demos=cfg.train.num_demos,
         reward_mode=reward_mode,
-        eps_ids=states_dataset.keys(),
+        eps_ids=states_dataset.keys(), # forces the demo replay dataset used as the offline buffer to use the same demos as the reverse curriculum
         data_action_scale=cfg.train.data_action_scale,
     )
     if demo_replay_dataset.action_scale is not None:
