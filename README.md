@@ -1,5 +1,6 @@
 # Reverse Forward Curriculum Learning (RFCL)
 
+**[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
 [Stone Tao](stoneztao.com), [Arth Shukla](https://arth.website/), [Kevin Chan](https://tsekai.com/), [Hao Su](https://cseweb.ucsd.edu/~haosu/)
 
 <p align="center">
@@ -14,7 +15,7 @@
 
 Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of perform well from the initial states of the given demonstrations, and then genrealize to a larger initial state distribution via a forward curriculum. Our shows a glimpse of the potential of how demonstration/sample efficient RL can be if one leverages the properties of simulation.
 
-**[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
+
 
 **Table of Contents**
 - [Setup](#setup-%EF%B8%8F)
@@ -25,6 +26,17 @@ Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from 
 - [Testing on New Environments / Customization](#testing-on-new-environments---customization-)
 
 <!-- todo anon: add in real names and links. Remove openreview -->
+
+If you find this work useful, consider citing:
+```
+@article{anon-rfcl2023,
+  title={Reverse Forward Curriculum Learning for Extreme Sample and Demonstration Efficiency in RL},
+  author={Anonymous Authors},
+  url={https://openreview.net/forum?id=w4rODxXsmM},
+  year={2023}
+}
+```
+
 ## Setup ⚙️
 
 We recommend using conda (or the faster mamba), and installing from source as so
