@@ -13,7 +13,7 @@
 
 ![](./assets/figure_main.png)
 
-Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of perform well from the initial states of the given demonstrations, and then genrealize to a larger initial state distribution via a forward curriculum. Our shows a glimpse of the potential of how demonstration/sample efficient RL can be if one leverages the properties of simulation.
+Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from demonstrations that enables extreme **demonstration and sample efficiency** in model-free RL. RFCL is capable of solving a wide range of complex tasks from just 1-10 demonstrations, far more demonstration efficient than prior model-free baselines. We use a per-demonstration reverse curriculum to train an initial policy capable of performing well from the initial states of the given demonstrations, and then generalize to a larger initial state distribution via a forward curriculum. Our work shows a glimpse of the potential of how demonstration/sample efficient algorithms can be if one leverages the properties of simulation.
 
 
 
@@ -208,12 +208,12 @@ env.close()
 
 The RecordEpsiodeWrapper assumes upon creating your environment you expose the function `env.get_env_state` which should return the current environment state as a dictionary or a flat vector. This will save the demonstration data to `demos/trajectory.h5` and necessary metadata to `demos/trajectory.json`. 
 
-Note that the code provided above is simplified, depending on your code setup, some parts e.g. setting the first initial state may not be as simple. For example, the original Adroit human demonstrations did not have initial environment states, so we had to reverse engineer them to figure out what they were.
+Note that the code provided above is simplified, depending on your code setup, some parts e.g. setting the first initial state may not be as simple. For example, the original Adroit human demonstrations did not have initial environment states, so we had to reverse-engineer them to figure out what they were.
 
 
 ### Training on New Environment and Data
 
-To train on your new environment, simply copy the base configuration in [`configs/ms2/base_sac_ms2.yml`](configs/ms2/base_sac_ms2.yml) and modify any environment kwargs you need under `env.env_kwargs` in the yml file. These are passed to both the training and evaluation environment. Suppose your new configuration is named `myconfig.yml`, you can run training easily as so by additionally specifycing the env id and demonstration dataset path:
+To train on your new environment, simply copy the base configuration in [`configs/ms2/base_sac_ms2.yml`](configs/ms2/base_sac_ms2.yml) and modify any environment kwargs you need under `env.env_kwargs` in the yml file. These are passed to both the training and evaluation environment. Suppose your new configuration is named `myconfig.yml`, you can run training easily as so by additionally specifying the env id and demonstration dataset path:
 
 ```bash
 seed=10
