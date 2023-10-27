@@ -91,4 +91,4 @@ logger:
   workspace: "exps"
   project_name: "RFCL-Sparse"
   wandb_cfg:
-    group: "RFCL-MetaWorld-Sparse-SampleEfficient-Baseline"
+    group: "RFCL-MetaWorld-Sparse-Baseline"

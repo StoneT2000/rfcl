@@ -41,7 +41,7 @@ class DMCGymEnv(gym.Env):
         channels_first=True,
                  **kwargs):
         super().__init__()
-        assert 'random' in task_kwargs, 'please specify a seed, for deterministic behaviour'
+        assert 'random' in task_kwargs, 'A seed must be specified via env_kwargs.task_kwargs.random. reset(seed=seed) will not change anything about the environment, it iwll only seed the action space'
         # env_name is parsed as dmc-<domain>-<task>
         assert env_name[:3] == "dmc", "Not a DM Control marked task"
         [_, env_domain, env_task] = env_name.split("-")
@@ -132,7 +132,7 @@ class DMCGymEnv(gym.Env):
         info["success"] = False
         return obs, reward, terminated, truncated, info
 
-    def reset(self, seed, options=None):
+    def reset(self, seed=None, options=None):
         time_step = self._env.reset()
         obs = self._get_obs_from_timestep(time_step)
         return obs, {}

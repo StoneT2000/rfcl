@@ -12,6 +12,8 @@ env:
   env_kwargs:
     render_mode: "rgb_array"
     reward_type: "sparse"
+    task_kwargs:
+      random: 0
 eval_env:
   num_envs: 2
   max_episode_steps: 200
@@ -21,9 +23,9 @@ sac:
   seed_with_policy: False
   replay_buffer_capacity: 1_000_000
   batch_size: 256
-  steps_per_env: 1
-  grad_updates_per_step: 80
-  actor_update_freq: 20
+  steps_per_env: 4
+  grad_updates_per_step: 16
+  actor_update_freq: 1
 
   num_qs: 10
   num_min_qs: 2
@@ -32,11 +34,11 @@ sac:
   tau: 0.005
   backup_entropy: False
 
-  eval_freq: 5_000
+  eval_freq: 50_000
   eval_steps: 1000
 
-  log_freq: 1_000
-  save_freq: 10_000
+  log_freq: 1000
+  save_freq: 50_000
 
   learnable_temp: True
   initial_temperature: 1.0
@@ -57,7 +59,7 @@ network:
 train:
   actor_lr: 3e-4
   critic_lr: 3e-4
-  steps: 1_000_000
+  steps: 100_000_000
   dataset_path: None
   shuffle_demos: True
   num_demos: 1000
@@ -91,4 +93,4 @@ logger:
   workspace: "exps"
   project_name: "RFCL-Sparse"
   wandb_cfg:
-    group: "RFCL-MetaWorld-Sparse-Baseline"
+    group: "RFCL-DMControl-Sparse-SampleEfficient-Baseline"
