@@ -12,6 +12,19 @@ import numpy as np
 
 
 def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1, shuffle: bool = False):
+    """
+    Given a demo dataset path in the ManiSkill2 format (.h5 file), returns a dictionary mapping demo id to the demonstration info.
+
+    Demonstration info includes
+        - reset_kwargs: dict. May be empty
+        - state: sequence of environment states from which we can provide to env.set_env_state with
+        - seed: the seed used to initialize the environment the demo was collected on. May be None
+        - demo_id: the demonstration ID in the dataset
+    
+    reset_kwargs and seed are important sometimes for some benchmarks to completely reconstruct an environment as some benchmarks do not parameterize
+    the entire environment state. This is typically only the case for environments that might build primitive shapes (e.g. rectangular prisms, capsules) of 
+    randomized sizes depending on seed.
+    """
     states_dataset = defaultdict(dict)
 
     demo_dataset = h5py.File(demo_dataset_path)
