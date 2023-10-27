@@ -92,7 +92,7 @@ class RecordEpisodeWrapper(gym.Wrapper):
 
     def __init__(
         self,
-        env: AdroitHandDoorEnv,
+        env,
         output_dir,
         save_trajectory=True,
         trajectory_name=None,
@@ -263,7 +263,6 @@ class RecordEpisodeWrapper(gym.Wrapper):
         group.create_dataset("actions", data=actions, dtype=np.float32)
         group.create_dataset("success", data=dones, dtype=bool)
         group.create_dataset("rewards", data=rewards, dtype=np.float32)
-        # group.create_dataset("env_states", data=env_states, dtype=np.float32)
 
         # Handle JSON
         self._json_data["episodes"].append(self._episode_info)

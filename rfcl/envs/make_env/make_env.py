@@ -11,9 +11,8 @@ from gymnasium.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
 from gymnasium.wrappers import TimeLimit
 from omegaconf import OmegaConf
 
-import rfcl.envs.make_env._gymnasium_robotics as _gymnasium_robotics
+from rfcl.envs.make_env.is_env import is_gymnasium_robotics_env, is_dmc_env, is_meta_world_env
 import rfcl.envs.make_env._mani_skill2 as _mani_skill2
-import rfcl.envs.make_env._meta_world as _meta_world
 from rfcl.envs.wrappers.common import (
     ContinuousTaskWrapper,
     EpisodeStatsWrapper,
@@ -43,7 +42,7 @@ class EnvMeta:
     env_suite: str
 
 
-def wrap_env(env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()):
+def wrap_mujoco_env(env, idx=0, record_video_path=None, wrappers=[], record_episode_kwargs=dict()):
     from rfcl.envs.wrappers._adroit import RecordEpisodeWrapper
 
     for wrapper in wrappers:
@@ -110,17 +109,17 @@ def make_env(
             env_factory = _mani_skill2.env_factory
 
             context = "forkserver"  # currently ms2 does not work with fork
-        elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
+        elif is_gymnasium_robotics_env(env_id):
             from rfcl.envs.maze.test_maze import PointMazeTestEnv
 
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
                     env = gymnasium.make(env_id, disable_env_checker=True, **env_kwargs)
-                    return wrap_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
+                    return wrap_mujoco_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
 
                 return _init
 
-        elif _meta_world.is_meta_world_env(env_id):
+        elif is_meta_world_env(env_id):
 
             def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
                 def _init():
@@ -134,10 +133,18 @@ def make_env(
 
                     env = MetaWorldEnv(env_id, **env_kwargs)
                     env.spec = EnvSpec(id=env_id, max_episode_steps=max_episode_steps)
-                    return wrap_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
+                    return wrap_mujoco_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
 
                 return _init
 
+        elif is_dmc_env(env_id):
+            def env_factory(env_id, idx, record_video_path, env_kwargs, wrappers=[], record_episode_kwargs=dict()):
+                def _init():
+                    from rfcl.envs.wrappers._dmc import DMCGymEnv
+                    env = DMCGymEnv(env_id, **env_kwargs)
+                    return wrap_mujoco_env(env, idx=idx, record_video_path=record_video_path, wrappers=wrappers, record_episode_kwargs=record_episode_kwargs)
+
+                return _init
         else:
             raise NotImplementedError()
 
@@ -183,10 +190,12 @@ def get_env_suite(env_id):
     """
     if _mani_skill2.is_mani_skill2_env(env_id):
         return "mani_skill2"
-    elif "AntMazeTest" in env_id.split("-") or "PointMazeTest" in env_id.split("-") or _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
+    elif "PointMazeTest" in env_id.split("-") or is_gymnasium_robotics_env(env_id):
         return "gymnasium_robotics"
-    elif _meta_world.is_meta_world_env(env_id):
+    elif is_meta_world_env(env_id):
         return "meta_world"
+    elif is_dmc_env(env_id):
+        return "dm_control"
     else:
         warnings.warn(
             f"Unknown environment suite for env {env_id}. You can safely ignore this. If this is a new environment we recommend updating the get_env_suite function in {THIS_FILE} file with the right details."
@@ -203,14 +212,17 @@ def get_initial_state_wrapper(env_id):
         from rfcl.envs.wrappers._maniskill2 import ManiSkill2InitialStateWrapper
 
         return ManiSkill2InitialStateWrapper
-    elif _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
+    elif is_gymnasium_robotics_env(env_id):
         from rfcl.envs.wrappers._adroit import AdroitInitialStateWrapper
 
         return AdroitInitialStateWrapper
-    elif _meta_world.is_meta_world_env(env_id):
+    elif is_meta_world_env(env_id):
         from rfcl.envs.wrappers._meta_world import MetaWorldInitialStateWrapper
 
         return MetaWorldInitialStateWrapper
+    elif is_dmc_env(env_id):
+        from rfcl.envs.wrappers._dmc import DMCInitialStateWrapper
+        return DMCInitialStateWrapper
     else:
         raise NotImplementedError(
             f"Need to add the initial state wrapper for {env_id}. Add it to rfcl/envs/wrappers/_<env_suite_name>.py and import it and return it here"
