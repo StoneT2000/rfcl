@@ -6,4 +6,4 @@ eval_env:
   max_episode_steps: 100
 
 train:
-  dataset_path: "demos/d4rl-full/AdroitHandPenSparse-v1/trajectory.h5"
+  dataset_path: "demos/d4rl/AdroitHandPenSparse-v1/trajectory.h5"
