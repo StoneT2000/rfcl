@@ -90,6 +90,7 @@ class SACExperiment:
     stage_1_model_path: str = None  # if not None, will load pretrained stage 1 model and skip to stage 2 of training
     save_eval_video: bool = True  # whether to save eval videos
     stage_1_only: bool = False  # stop training after reverse curriculum completes
+    stage_2_only: bool = False # skip stage 1 training
     demo_seed: int = None  # fix a seed to fix which demonstrations are sampled from a dataset
 
 
@@ -240,46 +241,47 @@ def main(cfg: SACExperiment):
 
     algo.offline_buffer = demo_replay_dataset  # create offline buffer to oversample from
 
-    def early_stop_fn(locals):
-        # callback function to log reverse curriculum metrics and stop training once reverse curriculum is done
-        nonlocal env, algo
-        logger = algo.logger
-        demo_metadata = env.demo_metadata
-        pts = []
-        solved_frac = 0
-        for k in demo_metadata:
-            pts.append(demo_metadata[k].start_step / (demo_metadata[k].total_steps - 1))
-            solved_frac += int(demo_metadata[k].solved)
-        solved_frac = solved_frac / len(demo_metadata)
-        mean_start_step = np.mean(pts)
-        logger.tb_writer.add_histogram("train_stats/start_step_frac_dist", pts, algo.state.total_env_steps)
-        logger.tb_writer.add_scalar("train_stats/start_step_frac_avg", mean_start_step, algo.state.total_env_steps)
-        if logger.wandb:
-            import wandb as wb
+    if not cfg.stage_2_only:
+        def early_stop_fn(locals):
+            # callback function to log reverse curriculum metrics and stop training once reverse curriculum is done
+            nonlocal env, algo
+            logger = algo.logger
+            demo_metadata = env.demo_metadata
+            pts = []
+            solved_frac = 0
+            for k in demo_metadata:
+                pts.append(demo_metadata[k].start_step / (demo_metadata[k].total_steps - 1))
+                solved_frac += int(demo_metadata[k].solved)
+            solved_frac = solved_frac / len(demo_metadata)
+            mean_start_step = np.mean(pts)
+            logger.tb_writer.add_histogram("train_stats/start_step_frac_dist", pts, algo.state.total_env_steps)
+            logger.tb_writer.add_scalar("train_stats/start_step_frac_avg", mean_start_step, algo.state.total_env_steps)
+            if logger.wandb:
+                import wandb as wb
 
-            logger.wandb_run.log(data={"train_stats/start_step_frac_dist": wb.Histogram(pts)}, step=algo.state.total_env_steps)
-            logger.wandb_run.log(data={"train_stats/start_step_frac_avg": mean_start_step}, step=algo.state.total_env_steps)
+                logger.wandb_run.log(data={"train_stats/start_step_frac_dist": wb.Histogram(pts)}, step=algo.state.total_env_steps)
+                logger.wandb_run.log(data={"train_stats/start_step_frac_avg": mean_start_step}, step=algo.state.total_env_steps)
 
-        if solved_frac > 0.9:
-            print("Reverse solved > 0.9 of demos. Stopping stage 1")
-            return True
-        return False
+            if solved_frac > 0.9:
+                print("Reverse solved > 0.9 of demos. Stopping stage 1")
+                return True
+            return False
 
-    if cfg.stage_1_model_path is None:
-        rng_key, train_rng_key = jax.random.split(jax.random.PRNGKey(cfg.seed), 2)
-        algo.train(
-            rng_key=train_rng_key,
-            steps=cfg.train.steps,
-            callback_fn=early_stop_fn,
-            verbose=cfg.verbose,
-        )
-        algo.save(osp.join(algo.logger.model_path, "stage_1.jx"), with_buffer=True)
-        algo.logger.tb_writer.add_scalar("train_stats/stage_1_steps", algo.state.total_env_steps, algo.state.total_env_steps)
-        if algo.logger.wandb:
-            algo.logger.wandb_run.log(data={"train_stats/stage_1_steps": algo.state.total_env_steps}, step=algo.state.total_env_steps)
-    else:
-        print(f"Loading stage 1 model: {cfg.stage_1_model_path}")
-        algo.load_from_path(cfg.stage_1_model_path)
+        if cfg.stage_1_model_path is None:
+            rng_key, train_rng_key = jax.random.split(jax.random.PRNGKey(cfg.seed), 2)
+            algo.train(
+                rng_key=train_rng_key,
+                steps=cfg.train.steps,
+                callback_fn=early_stop_fn,
+                verbose=cfg.verbose,
+            )
+            algo.save(osp.join(algo.logger.model_path, "stage_1.jx"), with_buffer=True)
+            algo.logger.tb_writer.add_scalar("train_stats/stage_1_steps", algo.state.total_env_steps, algo.state.total_env_steps)
+            if algo.logger.wandb:
+                algo.logger.wandb_run.log(data={"train_stats/stage_1_steps": algo.state.total_env_steps}, step=algo.state.total_env_steps)
+        else:
+            print(f"Loading stage 1 model: {cfg.stage_1_model_path}")
+            algo.load_from_path(cfg.stage_1_model_path)
 
     if cfg.stage_1_only:
         exit()
@@ -287,25 +289,27 @@ def main(cfg: SACExperiment):
     ###############################
     # Stage 2 Training: Normal RL with Forward Curriculums #
     ###############################
-
+    print("Stage 2 Training starting")
     # Optionally load actor/critic networks from stage 1 of training
     ac = create_ac_model()
     if cfg.train.load_actor:
         ac = ac.load(algo.state.ac.state_dict(), load_critic=cfg.train.load_critic)
         algo.state = algo.state.replace(ac=ac)
 
-    # Load previous model's replay buffer as a separate offline buffer to sample from or directly into the online buffer
-    if cfg.train.load_as_offline_buffer:
-        print(
-            f"Loading replay buffer as offline buffer which contains {algo.replay_buffer.size() * algo.replay_buffer.num_envs} interactions. Reset online buffer"
-        )
-        algo.offline_buffer = copy.deepcopy(algo.replay_buffer)
-        algo.replay_buffer.reset()
-    if cfg.train.load_as_online_buffer:
-        print(
-            f"Loading replay buffer into online buffer which contains {algo.replay_buffer.size() * algo.replay_buffer.num_envs} interactions. No offline buffer"
-        )
-        algo.offline_buffer = None
+    if not cfg.stage_2_only:
+        # if not stage 2 only, there is a stage 1 replay buffer we can use
+        # Load previous model's replay buffer as a separate offline buffer to sample from or directly into the online buffer
+        if cfg.train.load_as_offline_buffer:
+            print(
+                f"Loading replay buffer as offline buffer which contains {algo.replay_buffer.size() * algo.replay_buffer.num_envs} interactions. Reset online buffer"
+            )
+            algo.offline_buffer = copy.deepcopy(algo.replay_buffer)
+            algo.replay_buffer.reset()
+        if cfg.train.load_as_online_buffer:
+            print(
+                f"Loading replay buffer into online buffer which contains {algo.replay_buffer.size() * algo.replay_buffer.num_envs} interactions. No offline buffer"
+            )
+            algo.offline_buffer = None
 
     # Switch environments from the reverse curriculum environments to a normal environment
     env.close(), eval_env.close()
