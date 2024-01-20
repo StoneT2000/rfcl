@@ -1,4 +1,4 @@
-# Reverse Forward Curriculum Learning (RFCL)
+# RFCL: Reverse Forward Curriculum Learning (ICLR 2024)
 
 Official repository for the RFCL algorithm by
 
@@ -32,11 +32,11 @@ Reverse Forward Curriculum Learning (RFCL) is a novel approach to learning from 
 
 If you find this work useful, consider citing:
 ```
-@article{anon-rfcl2023,
+@article{tao2024rfcl,
   title={Reverse Forward Curriculum Learning for Extreme Sample and Demonstration Efficiency in RL},
-  author={Anonymous Authors},
-  url={https://openreview.net/forum?id=w4rODxXsmM},
-  year={2023}
+  author={Tao, Stone and Shukla, Arth and Chan, Tse-kai and Su, Hao},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year={2024}
 }
 ```
 
