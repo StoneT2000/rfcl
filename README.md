@@ -5,7 +5,7 @@ Official repository for the RFCL algorithm by
 [Stone Tao](stoneztao.com), [Arth Shukla](https://arth.website/), [Kevin Chan](https://tsekai.com/), [Hao Su](https://cseweb.ucsd.edu/~haosu/)
 
 
-**[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://openreview.net/pdf?id=w4rODxXsmM) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
+**[Project Page](https://reverseforward-cl.github.io/) | [Paper](https://arxiv.org/abs/2405.03379) | [Open Review](https://openreview.net/forum?id=w4rODxXsmM)**
 
 
 <p align="center">
