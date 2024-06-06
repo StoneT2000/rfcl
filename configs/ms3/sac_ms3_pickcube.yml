@@ -4,4 +4,4 @@ env:
 sac:
   discount: 0.9
 train:
-  dataset_path: "~/.maniskill/demos/PickCube-v1/motionplanning/trajectory.state.pd_joint_delta_pos.h5"
+  dataset_path: "~/.maniskill/demos/PickCube-v1/teleop/trajectory.state.pd_joint_delta_pos.h5"

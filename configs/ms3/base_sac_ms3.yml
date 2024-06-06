@@ -93,4 +93,4 @@ logger:
   workspace: "exps"
   project_name: "RFCL-Sparse"
   wandb_cfg:
-    group: "RFCL-ManiSkill2-Sparse-Baseline"
+    group: "RFCL-ManiSkill3-Sparse-Baseline"
