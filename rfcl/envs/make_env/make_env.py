@@ -106,9 +106,11 @@ def make_env(
         rescale_action_wrapper = lambda x: gymnasium.wrappers.RescaleAction(x, -env_action_scale, env_action_scale)
         clip_wrapper = lambda x: gymnasium.wrappers.ClipAction(x)
         wrappers = [ContinuousTaskWrapper, SparseRewardWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
+        is_gpu_env = False
         if _mani_skill3.is_mani_skill3_env(env_id):
             env_factory = _mani_skill3.env_factory
             context = "forkserver"  # currently ms3 does not work with fork
+            is_gpu_env = True
         elif _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
 
