@@ -146,27 +146,31 @@ def make_env(
         else:
             raise NotImplementedError()
 
-        wrappers = [
-            (lambda x: TimeLimit(x, max_episode_steps=max_episode_steps)),
-            *wrappers,
-        ]
-        # create a vector env parallelized across CPUs with the given timelimit and auto-reset
-        vector_env_cls = partial(AsyncVectorEnv, context=context)
-        if num_envs == 1:
-            vector_env_cls = SyncVectorEnv
-        env: VectorEnv = vector_env_cls(
-            [
-                env_factory(
-                    env_id,
-                    idx,
-                    env_kwargs=env_kwargs,
-                    record_video_path=record_video_path,
-                    wrappers=wrappers,
-                    record_episode_kwargs=record_episode_kwargs,
-                )
-                for idx in range(num_envs)
+        if not is_gpu_env:
+            wrappers = [
+                (lambda x: TimeLimit(x, max_episode_steps=max_episode_steps)),
+                *wrappers,
             ]
-        )
+            # create a vector env parallelized across CPUs with the given timelimit and auto-reset
+            vector_env_cls = partial(AsyncVectorEnv, context=context)
+            if num_envs == 1:
+                vector_env_cls = SyncVectorEnv
+            env: VectorEnv = vector_env_cls(
+                [
+                    env_factory(
+                        env_id,
+                        idx,
+                        env_kwargs=env_kwargs,
+                        record_video_path=record_video_path,
+                        wrappers=wrappers,
+                        record_episode_kwargs=record_episode_kwargs,
+                    )
+                    for idx in range(num_envs)
+                ]
+            )
+        else:
+            env = gymnasium.make(env_id, num_envs=num_envs, **env_kwargs)
+
         obs_space = env.single_observation_space
         act_space = env.single_action_space
         env.reset(seed=seed)
@@ -208,7 +212,6 @@ def get_initial_state_wrapper(env_id):
     """
     if _mani_skill3.is_mani_skill3_env(env_id):
         from rfcl.envs.wrappers._maniskill3 import ManiSkill3InitialStateWrapper
-
         return ManiSkill3InitialStateWrapper
     elif _mani_skill2.is_mani_skill2_env(env_id):
         from rfcl.envs.wrappers._maniskill2 import ManiSkill2InitialStateWrapper

@@ -26,7 +26,7 @@ from rfcl.utils.spaces import get_action_dim, get_obs_shape
 class BasePolicy:
     def __init__(
         self,
-        jax_env: bool,
+        env_type: str,
         env=None,
         eval_env=None,
         num_envs: int = 1,
@@ -39,7 +39,8 @@ class BasePolicy:
         Equips it with loopers and loggers
         """
         assert env is not None
-        self.jax_env = jax_env
+        self.env_type = env_type
+        self.jax_env = env_type == "jax"
         self.num_envs = num_envs
         self.num_eval_envs = num_eval_envs
         self.setup_envs(env, eval_env)
@@ -82,7 +83,7 @@ class BasePolicy:
 
             self.env: gymnasium.vector.VectorEnv = env
 
-            self.loop = GymLoop(self.env, num_envs=self.num_envs)
+            self.loop = GymLoop(self.env, num_envs=self.num_envs, env_type=self.env_type)
             self.observation_space = self.env.single_observation_space
             self.action_space = self.env.single_action_space
 
@@ -100,7 +101,7 @@ class BasePolicy:
                     eval_env.step,
                 )
             else:
-                self.eval_loop = GymLoop(eval_env, self.num_eval_envs)
+                self.eval_loop = GymLoop(eval_env, self.num_eval_envs, env_type=self.env_type)
 
     def state_dict(self):
         """
