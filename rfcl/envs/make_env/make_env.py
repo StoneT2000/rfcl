@@ -14,6 +14,7 @@ from omegaconf import OmegaConf
 import rfcl.envs.make_env._gymnasium_robotics as _gymnasium_robotics
 import rfcl.envs.make_env._mani_skill2 as _mani_skill2
 import rfcl.envs.make_env._meta_world as _meta_world
+import rfcl.envs.make_env._mani_skill3 as _mani_skill3
 from rfcl.envs.wrappers.common import (
     ContinuousTaskWrapper,
     EpisodeStatsWrapper,
@@ -105,8 +106,10 @@ def make_env(
         rescale_action_wrapper = lambda x: gymnasium.wrappers.RescaleAction(x, -env_action_scale, env_action_scale)
         clip_wrapper = lambda x: gymnasium.wrappers.ClipAction(x)
         wrappers = [ContinuousTaskWrapper, SparseRewardWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
-
-        if _mani_skill2.is_mani_skill2_env(env_id):
+        if _mani_skill3.is_mani_skill3_env(env_id):
+            env_factory = _mani_skill3.env_factory
+            context = "forkserver"  # currently ms3 does not work with fork
+        elif _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
 
             context = "forkserver"  # currently ms2 does not work with fork
@@ -181,7 +184,9 @@ def get_env_suite(env_id):
     """
     given env_id return the name of the suite the env is from
     """
-    if _mani_skill2.is_mani_skill2_env(env_id):
+    if _mani_skill3.is_mani_skill3_env(env_id):
+        return "mani_skill3"
+    elif _mani_skill2.is_mani_skill2_env(env_id):
         return "mani_skill2"
     elif "AntMazeTest" in env_id.split("-") or "PointMazeTest" in env_id.split("-") or _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
         return "gymnasium_robotics"
@@ -199,7 +204,11 @@ def get_initial_state_wrapper(env_id):
     given env_id return the InitialStateWrapper that is compatible with that env, allowing resetting to various initial states instead of the
     randomized initial state created with env.reset
     """
-    if _mani_skill2.is_mani_skill2_env(env_id):
+    if _mani_skill3.is_mani_skill3_env(env_id):
+        from rfcl.envs.wrappers._maniskill3 import ManiSkill3InitialStateWrapper
+
+        return ManiSkill3InitialStateWrapper
+    elif _mani_skill2.is_mani_skill2_env(env_id):
         from rfcl.envs.wrappers._maniskill2 import ManiSkill2InitialStateWrapper
 
         return ManiSkill2InitialStateWrapper

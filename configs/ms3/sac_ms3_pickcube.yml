@@ -1,0 +1,7 @@
+base_config: "base_sac_ms3.yml"
+env:
+  env_id: "PickCube-v1"
+sac:
+  discount: 0.9
+train:
+  dataset_path: "~/.maniskill/demos/PickCube-v1/motionplanning/trajectory.state.pd_joint_delta_pos.h5"
