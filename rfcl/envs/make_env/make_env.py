@@ -28,7 +28,7 @@ THIS_FILE = "rfcl/envs/make_env/make_env.py"
 @dataclass
 class EnvConfig:
     env_id: str
-    jax_env: bool
+    env_type: str
     max_episode_steps: int
     num_envs: int
     env_kwargs: Dict
@@ -66,7 +66,7 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
         cfg.env_kwargs = OmegaConf.to_container(cfg.env_kwargs)
     return make_env(
         env_id=cfg.env_id,
-        jax_env=cfg.jax_env,
+        env_type=cfg.env_type,
         max_episode_steps=cfg.max_episode_steps,
         num_envs=cfg.num_envs,
         seed=seed,
@@ -80,7 +80,7 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
 
 def make_env(
     env_id: str,
-    jax_env: bool,
+    env_type: str,
     max_episode_steps: int,
     num_envs: Optional[int] = 1,
     seed: Optional[int] = 0,
@@ -95,7 +95,7 @@ def make_env(
     """
     default_record_episode_kwargs = dict(save_video=True, save_trajectory=False, record_single=True, info_on_video=True)
     record_episode_kwargs = {**default_record_episode_kwargs, **record_episode_kwargs}
-    if jax_env:
+    if env_type == "jax":
         raise NotImplementedError()
     else:
         context = "fork"
@@ -106,11 +106,9 @@ def make_env(
         rescale_action_wrapper = lambda x: gymnasium.wrappers.RescaleAction(x, -env_action_scale, env_action_scale)
         clip_wrapper = lambda x: gymnasium.wrappers.ClipAction(x)
         wrappers = [ContinuousTaskWrapper, SparseRewardWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
-        is_gpu_env = False
         if _mani_skill3.is_mani_skill3_env(env_id):
             env_factory = _mani_skill3.env_factory
             context = "forkserver"  # currently ms3 does not work with fork
-            is_gpu_env = True
         elif _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
 
@@ -146,7 +144,7 @@ def make_env(
         else:
             raise NotImplementedError()
 
-        if not is_gpu_env:
+        if env_type == "gym:cpu":
             wrappers = [
                 (lambda x: TimeLimit(x, max_episode_steps=max_episode_steps)),
                 *wrappers,

@@ -232,8 +232,11 @@ class GymLoop(BaseEnvLoop):
             for k, v in rb.items():
                 data[k].append(v)
             observations = next_observations
-            dones = (terminations | truncations).cpu().numpy()
 
+            if self.is_torch_gpu_env:
+                dones = (terminations | truncations).cpu().numpy()
+            else:
+                dones = (terminations | truncations)
             ep_returns[dones] = 0
             ep_lengths[dones] = 0
         # stack data

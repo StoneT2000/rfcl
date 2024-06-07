@@ -229,7 +229,7 @@ def main(cfg: SACExperiment):
     algo = SAC(
         env=env,
         eval_env=eval_env,
-        jax_env=cfg.env.jax_env,
+        env_type=cfg.env.env_type,
         ac=ac,
         logger_cfg=logger_cfg,
         cfg=cfg.sac,
