@@ -28,10 +28,19 @@ THIS_FILE = "rfcl/envs/make_env/make_env.py"
 @dataclass
 class EnvConfig:
     env_id: str
+    """environment id, passed to gym.make"""
     env_type: str
+    """type of environment. 
+    
+    Can be "gym:cpu" for gymnasium interface and CPU vectorization, "gym:gpu" 
+    for gymnasium interface and GPU vectorization, and "jax" for jax based environments
+    """
     max_episode_steps: int
+    """max episode steps for the environment"""
     num_envs: int
+    """number of parallel environments to create. Note for SAC based RFCL, more is not necessarily faster"""
     env_kwargs: Dict
+    """additional kwargs to pass to the environment constructor"""
     action_scale: Union[Optional[np.ndarray], Optional[List[float]]]
 
 
