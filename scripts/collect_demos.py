@@ -117,7 +117,7 @@ def main(cfg: SACExperiment, model_path: str):
     algo = SAC(
         env=env,
         eval_env=None,
-        jax_env=cfg.env.jax_env,
+        env_type=cfg.env.env_type,
         ac=ac,
         logger_cfg=None,  # set none so we don't create a new logger
         cfg=cfg.sac,

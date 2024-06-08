@@ -33,7 +33,7 @@ def env_factory(env_id: str, idx: int, env_kwargs=dict(), record_video_path: str
                 trajectory_name=f"trajectory_{idx}",
                 save_video=record_episode_kwargs["save_video"],
                 save_trajectory=record_episode_kwargs["save_trajectory"],
-                info_on_video=False,#record_episode_kwargs["info_on_video"],
+                info_on_video=record_episode_kwargs["info_on_video"],
             )
         return env
 
