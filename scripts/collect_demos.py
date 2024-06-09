@@ -59,6 +59,7 @@ class SACExperiment:
     num_envs: int = 8
     num_episodes: int = 1000
     out: str = None  # where to save videos and trajectories
+    save_video: bool = True # whether to save videos with the first parallel environment
 
 
 from dacite import from_dict
@@ -86,7 +87,7 @@ def main(cfg: SACExperiment, model_path: str):
         seed=cfg.seed,
         wrappers=[],
         video_path=video_path,
-        record_episode_kwargs=dict(save_video=True, save_trajectory=True, record_single=False, info_on_video=False),
+        record_episode_kwargs=dict(save_video=cfg.save_video, save_trajectory=True, record_single=False, info_on_video=False),
     )
     np.save(osp.join(video_path, "action_scale.npy"), env_cfg.action_scale)
     sample_obs, sample_acts = env_meta.sample_obs, env_meta.sample_acts
