@@ -8,7 +8,7 @@ env:
   env_id: None
   max_episode_steps: 200
   num_envs: 8
-  jax_env: False
+  env_type: "gym:cpu"
   env_kwargs:
     render_mode: "rgb_array"
     reward_type: "sparse"

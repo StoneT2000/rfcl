@@ -60,7 +60,7 @@ class SACTrainState:
 class SAC(BasePolicy):
     def __init__(
         self,
-        jax_env: bool,
+        env_type: str,
         ac: ActorCritic,
         env,
         eval_env=None,
@@ -72,7 +72,7 @@ class SAC(BasePolicy):
             self.cfg = SACConfig(**cfg)
         else:
             self.cfg = cfg
-        super().__init__(jax_env, env, eval_env, cfg.num_envs, cfg.num_eval_envs, logger_cfg)
+        super().__init__(env_type, env, eval_env, cfg.num_envs, cfg.num_eval_envs, logger_cfg)
         self.offline_buffer = offline_buffer
         self.state: SACTrainState = SACTrainState(
             ac=ac,
@@ -83,7 +83,7 @@ class SAC(BasePolicy):
             initialized=False,
         )
 
-        if jax_env:
+        if env_type == "jax":
 
             def seed_sampler(rng_key):
                 return env.action_space().sample(rng_key)

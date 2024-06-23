@@ -1,3 +1,4 @@
+from typing import Sequence, Union
 import jax
 import numpy as np
 from chex import Array
@@ -68,3 +69,30 @@ def flatten_struct_to_dict(tree):
         key_path_str = "/".join(key_path_str)
         out_dict[key_path_str] = value
     return out_dict
+
+try:
+    import torch
+    def _to_numpy(array: Union[Array, Sequence]) -> np.ndarray:
+        if isinstance(array, (dict)):
+            return {k: _to_numpy(v) for k, v in array.items()}
+        if isinstance(array, torch.Tensor):
+            return array.cpu().numpy()
+        if (
+            isinstance(array, np.ndarray)
+            or isinstance(array, bool)
+            or isinstance(array, str)
+            or isinstance(array, float)
+            or isinstance(array, int)
+        ):
+            return array
+        else:
+            return np.array(array)
+
+
+    def to_numpy(array: Union[Array, Sequence], dtype=None) -> np.ndarray:
+        array = _to_numpy(array)
+        if dtype is not None:
+            return array.astype(dtype)
+        return array
+except:
+    pass

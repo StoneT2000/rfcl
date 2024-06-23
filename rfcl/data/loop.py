@@ -65,7 +65,14 @@ class BaseEnvLoop(ABC):
         """
         raise NotImplementedError("reset loop not defined")
 
-
+import jax
+import jax.dlpack
+import torch
+import torch.utils.dlpack
+def torch_to_jax(x):
+    return jax.dlpack.from_dlpack(torch.utils.dlpack.to_dlpack(x))
+def jax_to_torch(x):
+    return torch.utils.dlpack.from_dlpack(jax.dlpack.to_dlpack(x))
 class GymLoop(BaseEnvLoop):
     """
     RL loop for non jittable environments environment
@@ -76,10 +83,12 @@ class GymLoop(BaseEnvLoop):
             rollout function
     """
 
-    def __init__(self, env: gym.Env, num_envs: int = 1, rollout_callback: Callable = None) -> None:
+    def __init__(self, env: gym.Env, num_envs: int = 1, rollout_callback: Callable = None, env_type: str = "gym:cpu") -> None:
         self.env = env
         self.num_envs = num_envs
         self.rollout_callback = rollout_callback
+        self.env_type = env_type
+        self.is_torch_gpu_env = env_type == "gym:gpu"
         super().__init__(num_envs=num_envs)
 
     def reset_loop(self, rng_key: PRNGKey):
@@ -136,8 +145,14 @@ class GymLoop(BaseEnvLoop):
             p_bar = tqdm(range(steps_per_env))
         for t in p_bar:
             rng_key, rng_fn_key = jax.random.split(rng_key)
+
+            if self.is_torch_gpu_env:
+                observations = torch_to_jax(observations)
             actions, aux = apply_fn(rng_fn_key, params, observations)
-            actions = tools.any_to_np(actions)
+            if self.is_torch_gpu_env:
+                actions = jax_to_torch(actions)
+            else:
+                actions = tools.any_to_np(actions)
             (
                 next_observations,
                 rewards,
@@ -146,20 +161,26 @@ class GymLoop(BaseEnvLoop):
                 infos,
             ) = self.env.step(actions)
             ep_lengths = ep_lengths + 1
-            ep_returns = ep_returns + tools.any_to_np(rewards)
-
+            if self.is_torch_gpu_env:
+                ep_returns = ep_returns + rewards.cpu().numpy()
+            else:
+                ep_returns = ep_returns + tools.any_to_np(rewards)
             # determine true next observations s_{t+1} if some episodes truncated and not s_0 for terminated or truncated episodes
             true_next_observations = next_observations
             if tools.is_jax_arr(true_next_observations):
                 # for envs returning jax arrays, we expect consistency and a final_observation/next_obs to always be returned
                 true_next_observations = infos["final_observation"]
             else:
-                if "final_observation" in infos:  # TODO with wrapper to replace with next_observation key
-                    true_next_observations = next_observations.copy()
-                    for idx, (terminated, truncated) in enumerate(zip(terminations, truncations)):
-                        final_obs = infos["final_observation"][idx]
-                        if final_obs is not None:
-                            true_next_observations[idx] = final_obs
+                
+                if self.is_torch_gpu_env:
+                    pass
+                else:
+                    if "final_observation" in infos:  # TODO with wrapper to replace with next_observation key
+                        true_next_observations = next_observations.copy()
+                        for idx, (terminated, truncated) in enumerate(zip(terminations, truncations)):
+                            final_obs = infos["final_observation"][idx]
+                            if final_obs is not None:
+                                true_next_observations[idx] = final_obs
 
             if self.rollout_callback is not None:
                 rb = self.rollout_callback(
@@ -176,27 +197,46 @@ class GymLoop(BaseEnvLoop):
                     aux=aux,
                 )
             else:
-                rb = dict(
-                    env_obs=observations,
-                    next_env_obs=true_next_observations,
-                    action=actions,
-                    reward=rewards,
-                    ep_ret=ep_returns.copy(),
-                    ep_len=ep_lengths.copy(),
-                    terminated=terminations,
-                    truncated=truncations,
-                )
+                if self.is_torch_gpu_env:
+                    rb = dict(
+                        env_obs=np.array(observations),
+                        next_env_obs=true_next_observations.cpu().numpy(),
+                        action=actions.cpu().numpy(),
+                        reward=rewards.cpu().numpy(),
+                        ep_ret=ep_returns.copy(),
+                        ep_len=ep_lengths.copy(),
+                        terminated=terminations.cpu().numpy(),
+                        truncated=truncations.cpu().numpy(),
+                    )
+                else:
+                    rb = dict(
+                        env_obs=observations,
+                        next_env_obs=true_next_observations,
+                        action=actions,
+                        reward=rewards,
+                        ep_ret=ep_returns.copy(),
+                        ep_len=ep_lengths.copy(),
+                        terminated=terminations,
+                        truncated=truncations,
+                    )
+            
             if "final_info" in infos:
-                for info, keep in zip(infos["final_info"], infos["_final_info"]):
-                    if keep:
-                        data["final_info"].append(info)
-                    else:
-                        data["final_info"].append(None)  # TEMP TODO
+                if self.is_torch_gpu_env:
+                    data["final_info"] = tools.to_numpy(infos["final_info"])
+                else:
+                    for info, keep in zip(infos["final_info"], infos["_final_info"]):
+                        if keep:
+                            data["final_info"].append(info)
+                        else:
+                            data["final_info"].append(None)  # TEMP TODO
             for k, v in rb.items():
                 data[k].append(v)
             observations = next_observations
-            dones = terminations | truncations
 
+            if self.is_torch_gpu_env:
+                dones = (terminations | truncations).cpu().numpy()
+            else:
+                dones = (terminations | truncations)
             ep_returns[dones] = 0
             ep_lengths[dones] = 0
         # stack data
