@@ -126,8 +126,13 @@ class ReplayDataset:
         total_frames = 0
         if eps_ids is None:
             for episode in demo_dataset_meta["episodes"]:
-                if not episode["info"]["success"] and skip_failed:
-                    continue
+                if "info" in episode:
+                    if not episode["info"]["success"] and skip_failed:
+                        continue
+                else:
+                    # case for handling new maniskill demo format
+                    if "success" in episode and not episode["success"] and skip_failed:
+                        continue
                 self.eps_ids.append(episode["episode_id"])
                 load_count += 1
                 if load_count >= num_demos:
