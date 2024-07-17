@@ -185,7 +185,7 @@ class ReplayDataset:
             act_max, act_min = self.data["action"].max(0), self.data["action"].min(0)
             print(f"new act_max: {act_max} - act_min: {act_min}")
             print("Action scale", self.action_scale)
-        print(f"Loaded {load_count} demos, total {len(self.data['reward'])} frames. Loaded {self.eps_ids}")
+        print(f"Loaded {load_count} demos, total {len(self.data['reward'])} frames. First 10 Loaded {self.eps_ids[:10]}")
         self.size = len(self.data["env_obs"])
 
     def sample_random_batch(self, rng_key: jax.random.PRNGKey, batch_size: int):
