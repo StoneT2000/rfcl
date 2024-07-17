@@ -13,7 +13,8 @@ import numpy as np
 
 def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1, shuffle: bool = False):
     states_dataset = defaultdict(dict)
-
+    import os
+    demo_dataset_path = os.path.expanduser(demo_dataset_path)
     demo_dataset = h5py.File(demo_dataset_path)
     with open(demo_dataset_path.replace(".h5", ".json"), "r") as f:
         demo_dataset_meta = json.load(f)
@@ -23,7 +24,8 @@ def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1,
     if shuffle:
         np.random.shuffle(demo_dataset_meta["episodes"])
     for episode in demo_dataset_meta["episodes"]:
-        if not episode["info"]["success"] and skip_failed:
+        # NOTE (stao): MS3 dataset stores success elsewhere
+        if not episode["success"] and skip_failed:
             continue
         demo_id = episode["episode_id"]
         demo = demo_dataset[f"traj_{demo_id}"]
@@ -35,10 +37,14 @@ def get_states_dataset(demo_dataset_path, skip_failed=True, num_demos: int = -1,
                 reset_kwargs["options"]["initial_state_dict"][k] = np.array(reset_kwargs["options"]["initial_state_dict"][k])
 
         # handle both dict like env states and vector env states
-        if isinstance(demo["env_states"], h5py.Dataset):
-            env_states = np.array(demo["env_states"])
-        else:
-            env_states = [dict(zip(demo["env_states"], t)) for t in zip(*demo["env_states"].values())]
+        # NOTE (stao): ms3 dataset is formatted slightly differently, handled here
+        from mani_skill.utils import common
+        from mani_skill.trajectory.dataset import load_h5_data
+        env_states = common.flatten_state_dict(load_h5_data(demo["env_states"]))
+        # if isinstance(demo["env_states"], h5py.Dataset):
+        #     env_states = np.array(demo["env_states"])
+        # else:
+        #     env_states = [dict(zip(demo["env_states"], t)) for t in zip(*demo["env_states"].values())]
 
         # lightly truncate trajectory to improve reverse curriculum speed, it is not necessary however
         num_steps_in_success = demo["success"][:].sum()
@@ -96,6 +102,8 @@ class ReplayDataset:
         action_scale=None,
         data_action_scale=None,
     ) -> None:
+        import os
+        demo_dataset_path = os.path.expanduser(demo_dataset_path)
         self.demo_dataset_path = demo_dataset_path
         demo_dataset = h5py.File(demo_dataset_path)
         # assert reward_mode in ["sparse", "negative_sparse"]
@@ -118,8 +126,13 @@ class ReplayDataset:
         total_frames = 0
         if eps_ids is None:
             for episode in demo_dataset_meta["episodes"]:
-                if not episode["info"]["success"] and skip_failed:
-                    continue
+                if "info" in episode:
+                    if not episode["info"]["success"] and skip_failed:
+                        continue
+                else:
+                    # case for handling new maniskill demo format
+                    if "success" in episode and not episode["success"] and skip_failed:
+                        continue
                 self.eps_ids.append(episode["episode_id"])
                 load_count += 1
                 if load_count >= num_demos:
@@ -172,7 +185,7 @@ class ReplayDataset:
             act_max, act_min = self.data["action"].max(0), self.data["action"].min(0)
             print(f"new act_max: {act_max} - act_min: {act_min}")
             print("Action scale", self.action_scale)
-        print(f"Loaded {load_count} demos, total {len(self.data['reward'])} frames. Loaded {self.eps_ids}")
+        print(f"Loaded {load_count} demos, total {len(self.data['reward'])} frames. First 10 Loaded {self.eps_ids[:10]}")
         self.size = len(self.data["env_obs"])
 
     def sample_random_batch(self, rng_key: jax.random.PRNGKey, batch_size: int):
