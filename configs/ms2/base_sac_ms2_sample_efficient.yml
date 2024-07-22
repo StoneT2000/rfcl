@@ -8,7 +8,7 @@ env:
   env_id: None
   max_episode_steps: 100
   num_envs: 8
-  jax_env: False
+  env_type: "gym:cpu"
   env_kwargs:
     control_mode: "pd_ee_delta_pose"
     render_mode: "rgb_array"

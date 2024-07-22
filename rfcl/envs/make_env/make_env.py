@@ -14,6 +14,7 @@ from omegaconf import OmegaConf
 import rfcl.envs.make_env._gymnasium_robotics as _gymnasium_robotics
 import rfcl.envs.make_env._mani_skill2 as _mani_skill2
 import rfcl.envs.make_env._meta_world as _meta_world
+import rfcl.envs.make_env._mani_skill3 as _mani_skill3
 from rfcl.envs.wrappers.common import (
     ContinuousTaskWrapper,
     EpisodeStatsWrapper,
@@ -27,10 +28,19 @@ THIS_FILE = "rfcl/envs/make_env/make_env.py"
 @dataclass
 class EnvConfig:
     env_id: str
-    jax_env: bool
+    """environment id, passed to gym.make"""
+    env_type: str
+    """type of environment. 
+    
+    Can be "gym:cpu" for gymnasium interface and CPU vectorization, "gym:gpu" 
+    for gymnasium interface and GPU vectorization, and "jax" for jax based environments
+    """
     max_episode_steps: int
+    """max episode steps for the environment"""
     num_envs: int
+    """number of parallel environments to create. Note for SAC based RFCL, more is not necessarily faster"""
     env_kwargs: Dict
+    """additional kwargs to pass to the environment constructor"""
     action_scale: Union[Optional[np.ndarray], Optional[List[float]]]
 
 
@@ -65,7 +75,7 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
         cfg.env_kwargs = OmegaConf.to_container(cfg.env_kwargs)
     return make_env(
         env_id=cfg.env_id,
-        jax_env=cfg.jax_env,
+        env_type=cfg.env_type,
         max_episode_steps=cfg.max_episode_steps,
         num_envs=cfg.num_envs,
         seed=seed,
@@ -79,7 +89,7 @@ def make_env_from_cfg(cfg: EnvConfig, seed: int = None, video_path: str = None, 
 
 def make_env(
     env_id: str,
-    jax_env: bool,
+    env_type: str,
     max_episode_steps: int,
     num_envs: Optional[int] = 1,
     seed: Optional[int] = 0,
@@ -94,7 +104,7 @@ def make_env(
     """
     default_record_episode_kwargs = dict(save_video=True, save_trajectory=False, record_single=True, info_on_video=True)
     record_episode_kwargs = {**default_record_episode_kwargs, **record_episode_kwargs}
-    if jax_env:
+    if env_type == "jax":
         raise NotImplementedError()
     else:
         context = "fork"
@@ -105,8 +115,10 @@ def make_env(
         rescale_action_wrapper = lambda x: gymnasium.wrappers.RescaleAction(x, -env_action_scale, env_action_scale)
         clip_wrapper = lambda x: gymnasium.wrappers.ClipAction(x)
         wrappers = [ContinuousTaskWrapper, SparseRewardWrapper, EpisodeStatsWrapper, rescale_action_wrapper, clip_wrapper, *wrappers]
-
-        if _mani_skill2.is_mani_skill2_env(env_id):
+        if _mani_skill3.is_mani_skill3_env(env_id):
+            env_factory = _mani_skill3.env_factory
+            context = "forkserver"  # currently ms3 does not work with fork
+        elif _mani_skill2.is_mani_skill2_env(env_id):
             env_factory = _mani_skill2.env_factory
 
             context = "forkserver"  # currently ms2 does not work with fork
@@ -141,27 +153,31 @@ def make_env(
         else:
             raise NotImplementedError()
 
-        wrappers = [
-            (lambda x: TimeLimit(x, max_episode_steps=max_episode_steps)),
-            *wrappers,
-        ]
-        # create a vector env parallelized across CPUs with the given timelimit and auto-reset
-        vector_env_cls = partial(AsyncVectorEnv, context=context)
-        if num_envs == 1:
-            vector_env_cls = SyncVectorEnv
-        env: VectorEnv = vector_env_cls(
-            [
-                env_factory(
-                    env_id,
-                    idx,
-                    env_kwargs=env_kwargs,
-                    record_video_path=record_video_path,
-                    wrappers=wrappers,
-                    record_episode_kwargs=record_episode_kwargs,
-                )
-                for idx in range(num_envs)
+        if env_type == "gym:cpu":
+            wrappers = [
+                (lambda x: TimeLimit(x, max_episode_steps=max_episode_steps)),
+                *wrappers,
             ]
-        )
+            # create a vector env parallelized across CPUs with the given timelimit and auto-reset
+            vector_env_cls = partial(AsyncVectorEnv, context=context)
+            if num_envs == 1:
+                vector_env_cls = SyncVectorEnv
+            env: VectorEnv = vector_env_cls(
+                [
+                    env_factory(
+                        env_id,
+                        idx,
+                        env_kwargs=env_kwargs,
+                        record_video_path=record_video_path,
+                        wrappers=wrappers,
+                        record_episode_kwargs=record_episode_kwargs,
+                    )
+                    for idx in range(num_envs)
+                ]
+            )
+        else:
+            env = gymnasium.make(env_id, num_envs=num_envs, **env_kwargs)
+
         obs_space = env.single_observation_space
         act_space = env.single_action_space
         env.reset(seed=seed)
@@ -181,7 +197,9 @@ def get_env_suite(env_id):
     """
     given env_id return the name of the suite the env is from
     """
-    if _mani_skill2.is_mani_skill2_env(env_id):
+    if _mani_skill3.is_mani_skill3_env(env_id):
+        return "mani_skill3"
+    elif _mani_skill2.is_mani_skill2_env(env_id):
         return "mani_skill2"
     elif "AntMazeTest" in env_id.split("-") or "PointMazeTest" in env_id.split("-") or _gymnasium_robotics.is_gymnasium_robotics_env(env_id):
         return "gymnasium_robotics"
@@ -199,7 +217,10 @@ def get_initial_state_wrapper(env_id):
     given env_id return the InitialStateWrapper that is compatible with that env, allowing resetting to various initial states instead of the
     randomized initial state created with env.reset
     """
-    if _mani_skill2.is_mani_skill2_env(env_id):
+    if _mani_skill3.is_mani_skill3_env(env_id):
+        from rfcl.envs.wrappers._maniskill3 import ManiSkill3InitialStateWrapper
+        return ManiSkill3InitialStateWrapper
+    elif _mani_skill2.is_mani_skill2_env(env_id):
         from rfcl.envs.wrappers._maniskill2 import ManiSkill2InitialStateWrapper
 
         return ManiSkill2InitialStateWrapper
