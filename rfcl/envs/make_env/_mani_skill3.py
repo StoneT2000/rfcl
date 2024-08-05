@@ -4,7 +4,7 @@ import gymnasium as gym
 try:
     import mani_skill.envs  # NOQA
     from mani_skill.utils.wrappers import RecordEpisode as RecordEpisodeWrapper
-    from mani_skill.utils.wrappers.gymnasium import ManiSkillCPUGymWrapper
+    from mani_skill.utils.wrappers.gymnasium import CPUGymWrapper
 except ImportError:
     pass
 
@@ -22,7 +22,7 @@ def is_mani_skill3_env(env_id: str):
 def env_factory(env_id: str, idx: int, env_kwargs=dict(), record_video_path: str = None, wrappers=[], record_episode_kwargs=dict()):
     def _init():
         env = gym.make(env_id, disable_env_checker=True, **env_kwargs)
-        env = ManiSkillCPUGymWrapper(env)
+        env = CPUGymWrapper(env)
         for wrapper in wrappers:
             env = wrapper(env)
         
