@@ -169,4 +169,7 @@ class BasePolicy:
                     stats_list.append(info["stats"])
         stats = defaultdict(list)
         {stats[key].append(sub[key]) for sub in stats_list for key in sub}
-        return dict(eval_ep_rets=eval_ep_rets, eval_ep_lens=eval_ep_lens, stats=stats)
+        ret = dict(eval_ep_rets=eval_ep_rets, eval_ep_avg_reward=eval_ep_rets / eval_ep_lens, eval_ep_lens=eval_ep_lens, stats=stats)
+        if "success_at_end" in stats:
+            ret["success"] = stats["success_at_end"]
+        return ret

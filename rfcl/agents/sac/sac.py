@@ -194,15 +194,17 @@ class SAC(BasePolicy):
                     params=self.state.ac.actor,
                     apply_fn=self.state.ac.act,
                 )
+                eval_data = {
+                    "return": eval_results["eval_ep_rets"], "reward": eval_results["eval_ep_avg_reward"], 
+                    "episode_len": eval_results["eval_ep_lens"], "success": eval_results["success"]
+                }
                 self.logger.store(
-                    tag="test",
-                    ep_ret=eval_results["eval_ep_rets"],
-                    ep_len=eval_results["eval_ep_lens"],
+                    tag="eval",
+                    **eval_data
                 )
-                self.logger.store(tag="test_stats", **eval_results["stats"])
+                self.logger.store(tag="eval_stats", **eval_results["stats"])
                 self.logger.log(self.state.total_env_steps)
                 self.logger.reset()
-
             self.logger.store(tag="train", **train_step_metrics.train)
             self.logger.store(tag="train_stats", **train_step_metrics.train_stats)
 
@@ -217,7 +219,7 @@ class SAC(BasePolicy):
                     tag="time",
                     total=total_time,
                     SPS=self.state.total_env_steps / total_time,
-                    total_env_steps=self.state.total_env_steps,
+                    step=self.state.total_env_steps,
                     **train_step_metrics.time,
                 )
             # log and export the metrics
@@ -286,8 +288,8 @@ class SAC(BasePolicy):
                 # note for continuous task wrapped envs where there is no early done, all envs finish at the same time unless
                 # they are staggered. So masks is never false.
                 # if you want to always value bootstrap set masks to true.
-                train_metrics["ep_ret"].append(data.ep_ret[dones])
-                train_metrics["ep_len"].append(data.ep_len[dones])
+                train_metrics["return"].append(data.ep_ret[dones])
+                train_metrics["episode_len"].append(data.ep_len[dones])
                 if not self.jax_env:  # TODO fix for jax envs
                     for i, final_info in enumerate(final_infos):
                         if final_info is not None:
@@ -307,6 +309,11 @@ class SAC(BasePolicy):
 
         for k in train_metrics:
             train_metrics[k] = np.concatenate(train_metrics[k]).flatten()
+        if "return" in train_metrics and "episode_len" in train_metrics:
+            train_metrics["reward"] = train_metrics["return"] / train_metrics["episode_len"]
+        if "success_at_end" in train_custom_stats:
+            train_metrics["success"] = train_custom_stats["success_at_end"]
+
         rollout_time = time.time() - rollout_time_start
         time_metrics["rollout_time"] = rollout_time
         time_metrics["rollout_fps"] = self.cfg.num_envs * self.cfg.steps_per_env / rollout_time
