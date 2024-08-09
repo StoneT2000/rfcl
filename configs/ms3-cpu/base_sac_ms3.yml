@@ -6,37 +6,38 @@ verbose: 1
 # Environment configuration
 env:
   env_id: None
-  max_episode_steps: 200
+  max_episode_steps: 50
   num_envs: 8
   env_type: "gym:cpu"
   env_kwargs:
+    control_mode: "pd_joint_delta_pos"
     render_mode: "rgb_array"
-    reward_type: "sparse"
+    reward_mode: "sparse"
 eval_env:
   num_envs: 2
-  max_episode_steps: 200
+  max_episode_steps: 50
 
 sac:
   num_seed_steps: 5_000
   seed_with_policy: False
   replay_buffer_capacity: 1_000_000
   batch_size: 256
-  steps_per_env: 1
-  grad_updates_per_step: 80
-  actor_update_freq: 20
+  steps_per_env: 4
+  grad_updates_per_step: 16
+  actor_update_freq: 1
 
-  num_qs: 10
+  num_qs: 2
   num_min_qs: 2
 
-  discount: 0.99
+  discount: 0.9
   tau: 0.005
   backup_entropy: False
 
-  eval_freq: 5_000
-  eval_steps: 1000
+  eval_freq: 50_000
+  eval_steps: 500
 
-  log_freq: 1_000
-  save_freq: 10_000
+  log_freq: 1000
+  save_freq: 50_000
 
   learnable_temp: True
   initial_temperature: 1.0
@@ -57,7 +58,7 @@ network:
 train:
   actor_lr: 3e-4
   critic_lr: 3e-4
-  steps: 1_000_000
+  steps: 100_000_000
   dataset_path: None
   shuffle_demos: True
   num_demos: 1000
@@ -65,11 +66,11 @@ train:
   data_action_scale: null
 
   ## Reverse curriculum configs
-  reverse_step_size: 8
+  reverse_step_size: 4
   start_step_sampler: "geometric"
   curriculum_method: "per_demo"
   per_demo_buffer_size: 3
-  demo_horizon_to_max_steps_ratio: 1
+  demo_horizon_to_max_steps_ratio: 3
   train_on_demo_actions: True
 
   load_actor: True
@@ -85,6 +86,7 @@ train:
   score_transform: "rankmin"
   score_temperature: 0.1
   num_seeds: 1000
+
 logger:
   tensorboard: True
   wandb: False
@@ -92,4 +94,4 @@ logger:
   workspace: "exps"
   project_name: "RFCL-Sparse"
   wandb_cfg:
-    group: "RFCL-MetaWorld-Sparse-SampleEfficient-Baseline"
+    group: "RFCL-ManiSkill3-Sparse-Baseline"

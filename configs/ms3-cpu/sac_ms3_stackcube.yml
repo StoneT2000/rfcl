@@ -1,0 +1,5 @@
+base_config: "base_sac_ms3.yml"
+env:
+  env_id: "StackCube-v1"
+train:
+  dataset_path: "~/.maniskill/demos/StackCube-v1/teleop/trajectory.state.pd_joint_delta_pos.h5"

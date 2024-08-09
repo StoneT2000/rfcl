@@ -40,6 +40,10 @@ If you find this work useful, consider citing:
 }
 ```
 
+**Updates**
+- 2024/08/9: You can train without any action labels. Sample-efficiency/wall-time will be worse but you can now easily train on demos that do not have action labels, just env states.
+- 2024/07/17: Added support for ManiSkill3 environments
+
 ## Setup ⚙️
 
 We recommend using conda (or the faster mamba), and installing from source as so
@@ -116,6 +120,8 @@ To visually see how the reverse curriculum is progressing through evaluation vid
 
 All training results of RFCL from the paper are publically available on weights and biases for you to download and compare with: https://wandb.ai/stonet2000/RFCL-Sparse. See the reports section for more organized views of the results.
 
+Not in the paper but in the code, you can train on demonstrations without any action labels. Sample-efficiency/wall-time will be worse but you can now easily train on demos that do not have action labels, just env states. Simply add `train.train_on_demo_actions=False` to the command line arguments.
+
 ### Tuning tips for RFCL 🔧
 
 There are a few very important hyperparameters to tune if you want better performance / something is not working.
@@ -157,6 +163,12 @@ This could pave way for a scalable solution to generate usable demonstrations fo
 XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/collect_demos.py exps/path/to/model.jx \
     num_envs=8 num_episodes=1000
 ```
+
+### Learning without Action Labels, just Environment States
+
+There are situations where a demonstration collected do not have good action labels (e.g. too noisy), or the actions are in a undesired action space. RFCL lets you train on purely environment states in demonstrations, which lets you learn RL policies in any feasible action space and is independent of action label quality.
+
+This will be less sample-efficient but can work when given sufficient compute and is likely the only open-sourced sim-based algorithm capable of learning without actions in demonstrations, just environment states. 
 
 ## Testing on New Environments 🌏 / Customization 🎨
 
