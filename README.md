@@ -164,6 +164,12 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/collect_demos.py exps/path/to
     num_envs=8 num_episodes=1000
 ```
 
+### Learning without Action Labels, just Environment States
+
+There are situations where a demonstration collected do not have good action labels (e.g. too noisy), or the actions are in a undesired action space. RFCL lets you train on purely environment states in demonstrations, which lets you learn RL policies in any feasible action space and is independent of action label quality.
+
+This will be less sample-efficient but can work when given sufficient compute and is likely the only open-sourced sim-based algorithm capable of learning without actions in demonstrations, just environment states. 
+
 ## Testing on New Environments 🌏 / Customization 🎨
 
 ### Adding a new Environment
