@@ -49,6 +49,7 @@ class TrainConfig:
     start_step_sampler: str
     per_demo_buffer_size: int
     demo_horizon_to_max_steps_ratio: float
+    train_on_demo_actions: bool
 
     # forward curriculum configs
     forward_curriculum: str
@@ -141,18 +142,19 @@ def main(cfg: SACExperiment):
     else:
         raise ValueError("reward_mode is not specified")
 
-    demo_replay_dataset = ReplayDataset(
-        cfg.train.dataset_path,
-        shuffle=cfg.train.shuffle_demos,
-        skip_failed=False,
-        num_demos=cfg.train.num_demos,
-        reward_mode=reward_mode,
-        eps_ids=states_dataset.keys(), # forces the demo replay dataset used as the offline buffer to use the same demos as the reverse curriculum
-        data_action_scale=cfg.train.data_action_scale,
-    )
-    if demo_replay_dataset.action_scale is not None:
-        env_cfg.action_scale = demo_replay_dataset.action_scale.tolist()
-        eval_env_cfg.action_scale = env_cfg.action_scale
+    if cfg.train.train_on_demo_actions:
+        demo_replay_dataset = ReplayDataset(
+            cfg.train.dataset_path,
+            shuffle=cfg.train.shuffle_demos,
+            skip_failed=False,
+            num_demos=cfg.train.num_demos,
+            reward_mode=reward_mode,
+            eps_ids=states_dataset.keys(), # forces the demo replay dataset used as the offline buffer to use the same demos as the reverse curriculum
+            data_action_scale=cfg.train.data_action_scale,
+        )
+        if demo_replay_dataset.action_scale is not None:
+            env_cfg.action_scale = demo_replay_dataset.action_scale.tolist()
+            eval_env_cfg.action_scale = env_cfg.action_scale
     InitialStateWrapper = get_initial_state_wrapper(cfg.env.env_id)
     np.random.seed(cfg.seed)
     wrappers = [
@@ -239,7 +241,8 @@ def main(cfg: SACExperiment):
     # Stage 1 Training: Reverse Curriculum RL #
     ###########################################
 
-    algo.offline_buffer = demo_replay_dataset  # create offline buffer to oversample from
+    if cfg.train.train_on_demo_actions:
+        algo.offline_buffer = demo_replay_dataset  # create offline buffer to oversample from
 
     if not cfg.stage_2_only:
         def early_stop_fn(locals):
