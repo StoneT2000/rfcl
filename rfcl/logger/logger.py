@@ -284,7 +284,7 @@ class Logger:
                         vals = np.array(v)
                         vals_sum, n = vals.sum(), len(vals)
                         avg = vals_sum / n
-                        key_vals = {f"{tag}/{k}_avg": avg}
+                        key_vals = {f"{tag}/{k}": avg}
                         if self.data_log_summary[tag][k]:
                             sum_sq = np.sum((vals - avg) ** 2)
                             std = np.sqrt(sum_sq / n)
