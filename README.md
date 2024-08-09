@@ -40,6 +40,10 @@ If you find this work useful, consider citing:
 }
 ```
 
+**Updates**
+- 2024/08/9: You can train without any action labels. Sample-efficiency/wall-time will be worse but you can now easily train on demos that do not have action labels, just env states.
+- 2024/07/17: Added support for ManiSkill3 environments
+
 ## Setup ⚙️
 
 We recommend using conda (or the faster mamba), and installing from source as so
@@ -115,6 +119,8 @@ See `configs/<env_suite>` for all configurations if you want to understand the e
 To visually see how the reverse curriculum is progressing through evaluation videos, pass in the argument `train.eval_use_orig_env=False`, which will then wrap the evaluation environment with the reverse curriculum wrapper and sync with the training environment's reverse curriculum. Videos here are saved to `exps<logger.exp_name>/stage_1_videos`. By default this is `True` so evaluation/test results reported to tensorboard/wandb are always the results from evaluating on the task's original initial state distribution.
 
 All training results of RFCL from the paper are publically available on weights and biases for you to download and compare with: https://wandb.ai/stonet2000/RFCL-Sparse. See the reports section for more organized views of the results.
+
+Not in the paper but in the code, you can train on demonstrations without any action labels. Sample-efficiency/wall-time will be worse but you can now easily train on demos that do not have action labels, just env states. Simply add `train.train_on_demo_actions=False` to the command line arguments.
 
 ### Tuning tips for RFCL 🔧
 
