@@ -52,6 +52,6 @@ class EpisodeStatsWrapper(gym.Wrapper):
             success_at_end=int(
                 info["success"]
             ),  # this is the success rate used for comparing algorithm performances, which is more difficult but more realistic
-            success=self.success_once,
+            success_once=self.success_once,
         )
         return observation, reward, terminated, truncated, info
