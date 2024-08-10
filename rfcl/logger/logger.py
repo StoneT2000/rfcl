@@ -141,12 +141,13 @@ class Logger:
         Path(self.video_path).mkdir(parents=True, exist_ok=True)
         # set up external loggers
 
+        self.wandb_run = None
         if self.wandb:
             if project_name is None:
                 project_name = workspace
             if "wandb_id" in cfg:
                 wandb_id = cfg["wandb_id"]
-                wb.init(
+                self.wandb_run = wb.init(
                     project=project_name,
                     name=exp_name,
                     id=wandb_id,
