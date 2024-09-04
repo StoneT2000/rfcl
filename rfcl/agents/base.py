@@ -171,5 +171,7 @@ class BasePolicy:
         {stats[key].append(sub[key]) for sub in stats_list for key in sub}
         ret = dict(eval_ep_rets=eval_ep_rets, eval_ep_avg_reward=eval_ep_rets / eval_ep_lens, eval_ep_lens=eval_ep_lens, stats=stats)
         if "success_at_end" in stats:
-            ret["success"] = stats["success_at_end"]
+            ret["success_at_end"] = stats.pop("success_at_end")
+        if "success_once" in stats:
+            ret["success_once"] = stats.pop("success_once")
         return ret

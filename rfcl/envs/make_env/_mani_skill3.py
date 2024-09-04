@@ -22,7 +22,7 @@ def is_mani_skill3_env(env_id: str):
 def env_factory(env_id: str, idx: int, env_kwargs=dict(), record_video_path: str = None, wrappers=[], record_episode_kwargs=dict()):
     def _init():
         env = gym.make(env_id, disable_env_checker=True, **env_kwargs)
-        env = CPUGymWrapper(env)
+        env = CPUGymWrapper(env, ignore_terminations=True, record_metrics=True)
         for wrapper in wrappers:
             env = wrapper(env)
         

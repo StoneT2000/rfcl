@@ -42,16 +42,21 @@ class EpisodeStatsWrapper(gym.Wrapper):
 
     def step(self, action):
         observation, reward, terminated, truncated, info = super().step(action)
-        self.eps_ret += reward
-        self.eps_len += 1
-        info["eps_ret"] = self.eps_ret
-        info["eps_len"] = self.eps_len
         info["seed"] = self.eps_seed
-        self.success_once = self.success_once | info["success"]
-        info["stats"] = dict(
-            success_at_end=int(
-                info["success"]
-            ),  # this is the success rate used for comparing algorithm performances, which is more difficult but more realistic
-            success_once=self.success_once,
-        )
+        if "episode" in info:
+            info["stats"] = info.pop("episode")
+            info["eps_ret"] = info["stats"]["return"]
+            info["eps_len"] = info["stats"]["episode_len"]
+        else:
+            self.eps_ret += reward
+            self.eps_len += 1
+            info["eps_ret"] = self.eps_ret
+            info["eps_len"] = self.eps_len
+            self.success_once = self.success_once | info["success"]
+            info["stats"] = dict(
+                success_at_end=int(
+                    info["success"]
+                ),  # this is the success rate used for comparing algorithm performances, which is more difficult but more realistic
+                success_once=self.success_once,
+            )
         return observation, reward, terminated, truncated, info

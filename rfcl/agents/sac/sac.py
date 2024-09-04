@@ -196,7 +196,7 @@ class SAC(BasePolicy):
                 )
                 eval_data = {
                     "return": eval_results["eval_ep_rets"], "reward": eval_results["eval_ep_avg_reward"], 
-                    "episode_len": eval_results["eval_ep_lens"], "success": eval_results["success"]
+                    "episode_len": eval_results["eval_ep_lens"], "success_once": eval_results["success_once"], "success_at_end": eval_results["success_at_end"]
                 }
                 self.logger.store(
                     tag="eval",
@@ -312,7 +312,9 @@ class SAC(BasePolicy):
         if "return" in train_metrics and "episode_len" in train_metrics:
             train_metrics["reward"] = train_metrics["return"] / train_metrics["episode_len"]
         if "success_at_end" in train_custom_stats:
-            train_metrics["success"] = train_custom_stats["success_at_end"]
+            train_metrics["success_at_end"] = train_custom_stats.pop("success_at_end")
+        if "success_once" in train_custom_stats:
+            train_metrics["success_once"] = train_custom_stats.pop("success_once")
 
         rollout_time = time.time() - rollout_time_start
         time_metrics["rollout_time"] = rollout_time
